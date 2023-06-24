@@ -1,2 +1,0 @@
-# averyee.github.io
-zuoye

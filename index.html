@@ -11,7 +11,7 @@
             font-family: 'Microsoft YaHei', sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             background-color: #f5f5f5;
         }
         .quiz-container {
@@ -144,7 +144,7 @@
             background-color: #fff3e0;
         }
         .mode-switch {
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             text-align: right;
         }
         /* PDF导出用的隐藏内容 */
@@ -1410,13 +1410,20 @@
                     return this.answeredQuestions[index]?.selectedAnswer;
                 },
                 isBlankCorrect(index) {
-                    return this.blankAnswers[index] === this.currentQuestion.blanks[index];
+                    if (this.currentQuestion.id === 88) {
+                        const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+                        return correctAnswersSet.has(this.blankAnswers[index].trim().toLowerCase());
+                    }
+                    return this.blankAnswers[index].trim().toLowerCase() === this.currentQuestion.blanks[index].toLowerCase();
                 },
                 checkBlankAnswers() {
                     if (this.currentQuestion.type !== 'blank') return true;
-                    return this.currentQuestion.blanks.every((blank, index) => 
-                        this.blankAnswers[index] === blank
-                    );
+                    
+                    const userAnswersSet = new Set(this.blankAnswers.map(ans => ans.trim().toLowerCase()));
+                    const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+                    
+                    return userAnswersSet.size === correctAnswersSet.size &&
+                           [...userAnswersSet].every(ans => correctAnswersSet.has(ans));
                 }
             },
             created() {

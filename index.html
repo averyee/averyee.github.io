@@ -177,11 +177,12 @@
             flex: 1;
         }
         .quiz-sidebar {
-            width: 300px;
+            width: 400px;
             padding: 20px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
         }
         .question-section {
             margin-bottom: 20px;
@@ -194,18 +195,18 @@
         }
         .question-list {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(8, 1fr);
             gap: 8px;
             margin-bottom: 15px;
         }
         .question-item {
-            padding: 6px;
+            padding: 8px 4px;
             border: 2px solid #e0e0e0;
             border-radius: 4px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 14px;
+            font-size: 13px;
             position: relative;
             overflow: hidden;
         }

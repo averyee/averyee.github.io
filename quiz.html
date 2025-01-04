@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>数据库选择题 - 带错题记录</title>
+    <title>{{ subjectName }} - 在线题库</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
     <style>
@@ -14,15 +14,17 @@
             padding: 15px;
             background-color: #f5f5f5;
         }
+
         .quiz-container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             min-height: 90vh;
             display: flex;
             flex-direction: column;
         }
+
         .question-card {
             margin-bottom: 20px;
             padding: 20px;
@@ -30,9 +32,11 @@
             background-color: white;
             transition: all 0.3s ease;
         }
+
         .options {
             margin: 20px 0;
         }
+
         .option {
             margin: 10px 0;
             padding: 10px;
@@ -41,30 +45,37 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+
         .option:hover {
             background-color: #f5f5f5;
         }
+
         .option.selected {
             border-color: #2196f3;
             background-color: #e3f2fd;
         }
+
         .option.correct {
             border-color: #4caf50;
             background-color: #e8f5e9;
         }
+
         .option.incorrect {
             border-color: #ff0000;
             background-color: #ffebee;
         }
+
         .option.disabled {
             cursor: not-allowed;
             opacity: 0.7;
         }
+
         .button-container {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
         }
+
         button {
             background-color: #2196f3;
             color: white;
@@ -78,15 +89,18 @@
             overflow: hidden;
             margin: 0 5px;
         }
+
         button:hover {
             background-color: #1976d2;
             transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
+
         button:active {
             transform: translateY(0);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         }
+
         button::after {
             content: '';
             position: absolute;
@@ -99,25 +113,31 @@
             border-radius: 50%;
             transition: transform 0.3s ease-out;
         }
+
         button:active::after {
             transform: translate(-50%, -50%) scale(1);
         }
+
         button:disabled {
             background-color: #bdbdbd;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
+
         button:disabled:hover {
             transform: none;
             box-shadow: none;
         }
+
         .export-button {
             background-color: #4caf50;
         }
+
         .export-button:hover {
             background-color: #388e3c;
         }
+
         .stats {
             display: flex;
             justify-content: space-around;
@@ -125,18 +145,21 @@
             background: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+
         .stat-item {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+
         .stat-label {
             color: #666;
             font-size: 14px;
         }
+
         .stat-value {
             font-size: 18px;
             font-weight: bold;
@@ -144,9 +167,11 @@
             min-width: 40px;
             text-align: center;
         }
+
         .error-count {
             color: #f44336;
         }
+
         .wrong-questions {
             margin-top: 20px;
             padding: 20px;
@@ -154,98 +179,120 @@
             border-radius: 8px;
             display: none;
         }
+
         .wrong-questions.show {
             display: block;
         }
+
         .wrong-question-item {
             margin-bottom: 15px;
             padding: 10px;
             border-left: 3px solid #ff9800;
             background-color: #fff;
         }
+
         .review-mode {
             background-color: #fff3e0;
         }
+
         .mode-switch {
             margin-bottom: 8px;
             text-align: right;
         }
+
         /* PDF导出用的隐藏内容 */
         .pdf-content {
             display: none;
             font-family: 'SimSun', serif;
         }
+
         .pdf-content.show {
             display: block;
         }
+
         .wrong-question-pdf {
             margin-bottom: 20px;
             page-break-inside: avoid;
         }
+
         .option-pdf {
             margin: 5px 0;
             padding: 5px;
         }
+
         .correct-answer {
             color: #4caf50;
         }
+
         .wrong-answer {
             color: #f44336;
         }
+
         .quiz-layout {
             display: flex;
             gap: 20px;
         }
+
         .quiz-main {
             flex: 1;
         }
+
         .quiz-sidebar {
             width: 400px;
             padding: 20px;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             height: fit-content;
-            position: sticky;  /* 使侧边栏固定 */
-            top: 20px;        /* 距离顶部距离 */
+            position: sticky; /* 使侧边栏固定 */
+            top: 20px; /* 距离顶部距离 */
         }
+
         .question-section {
             margin-bottom: 20px;
         }
+
         .question-section h4 {
             margin: 10px 0;
             padding-bottom: 5px;
             border-bottom: 2px solid #2196f3;
             color: #1976d2;
         }
+
         .question-list-container {
-            max-height: 200px;    /* 设置固定高度 */
-            overflow-y: auto;     /* 允许垂直滚动 */
+            max-height: 200px; /* 设置固定高度 */
+            overflow-y: auto; /* 允许垂直滚动 */
             padding: 10px;
             border: 1px solid #e0e0e0;
             border-radius: 4px;
             position: relative;
         }
+
         /* 自定义滚动条样式 */
         .question-list-container::-webkit-scrollbar {
             width: 6px;
         }
+
         .question-list-container::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 3px;
         }
+
         .question-list-container::-webkit-scrollbar-thumb {
             background: #2196f3;
             border-radius: 3px;
         }
+
         .question-list-container::-webkit-scrollbar-thumb:hover {
             background: #1976d2;
         }
+
         .question-list {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             gap: 8px;
         }
+
         .question-item {
             padding: 8px 4px;
             border: 2px solid #e0e0e0;
@@ -257,14 +304,17 @@
             position: relative;
             overflow: hidden;
         }
+
         .question-item:hover {
             transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
+
         .question-item:active {
             transform: translateY(0);
             background-color: #e3f2fd;
         }
+
         .question-item::after {
             content: '';
             position: absolute;
@@ -277,23 +327,28 @@
             border-radius: 50%;
             transition: transform 0.3s ease-out;
         }
+
         .question-item:active::after {
             transform: translate(-50%, -50%) scale(1);
         }
+
         .question-item.answered {
             background-color: #e3f2fd;
             border-color: #2196f3;
         }
+
         .question-item.incorrect {
             background-color: #ffebee;
             border-color: #f44336;
         }
+
         .question-item.current {
             border-width: 2px;
             border-color: #2196f3;
             font-weight: bold;
             animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
             0% {
                 box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
@@ -305,6 +360,7 @@
                 box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
             }
         }
+
         .explanation {
             margin-top: 15px;
             padding: 15px;
@@ -312,35 +368,37 @@
             border-left: 4px solid #ffa000;
             border-radius: 4px;
         }
-        
+
         .explanation h4 {
             margin: 0 0 10px 0;
             color: #f57c00;
         }
-        
+
         .explanation p {
             margin: 0;
             line-height: 1.5;
             color: #333;
         }
+
         .option.previous-wrong {
             border-color: #ff0000;
             background-color: #fff3e0;
         }
-        
+
         .feedback div {
             margin-top: 5px;
             font-size: 0.9em;
             color: #ff9800;
         }
+
         .blanks {
             margin: 20px 0;
         }
-        
+
         .blank-item {
             margin: 10px 0;
         }
-        
+
         .blank-item input {
             padding: 8px;
             border: 2px solid #e0e0e0;
@@ -348,39 +406,45 @@
             font-size: 16px;
             width: 200px;
         }
-        
+
         .blank-item input.correct {
             border-color: #4caf50;
             background-color: #e8f5e9;
         }
-        
+
         .blank-item input.incorrect {
             border-color: #f44336;
             background-color: #ffebee;
         }
-        
+
         .correct-answer {
             margin-left: 10px;
             color: #4caf50;
         }
+
         .question-section:nth-child(2) .question-item {
             background-color: #e3f2fd;
         }
+
         .question-section:nth-child(3) .question-item {
             background-color: #f3e5f5;
         }
+
         .question-section:nth-child(3) .question-item.answered {
             background-color: #ce93d8;
             border-color: #9c27b0;
         }
+
         .question-section:nth-child(3) .question-item.incorrect {
             background-color: #ffcdd2;
             border-color: #f44336;
         }
+
         .question-section:nth-child(3) .question-item.current {
             border-color: #9c27b0;
             animation: pulse-purple 2s infinite;
         }
+
         @keyframes pulse-purple {
             0% {
                 box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.4);
@@ -392,6 +456,7 @@
                 box-shadow: 0 0 0 0 rgba(156, 39, 176, 0);
             }
         }
+
         @media screen and (max-width: 1024px) {
             body {
                 padding: 10px;
@@ -505,20 +570,20 @@
         }
 
         .home-button {
-            background-color: #ff9800;  /* 橙色背景 */
+            background-color: #ff9800; /* 橙色背景 */
         }
-        
+
         .home-button:hover {
             background-color: #f57c00;
         }
-        
+
         @media screen and (max-width: 480px) {
             .mode-switch {
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
             }
-            
+
             .mode-switch button {
                 width: 100%;
             }
@@ -530,12 +595,12 @@
             background-color: #fff8e1;
             border-left: 4px solid #ffa000;
         }
-        
+
         .explanation-pdf h4 {
             margin: 0 0 5px 0;
             color: #f57c00;
         }
-        
+
         .explanation-pdf p {
             margin: 0;
             line-height: 1.5;
@@ -645,7 +710,7 @@
             }
 
             .answer-feedback {
-                margin-left: 43px;  /* 28px(图标宽度) + 15px(右边距) */
+                margin-left: 43px; /* 28px(图标宽度) + 15px(右边距) */
             }
         }
 
@@ -734,94 +799,94 @@
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="quiz-container" v-if="!isGeneratingPDF">
-            <h1>数据库选择题</h1>
-            
-            <div class="mode-switch">
-                <button @click="goHome" class="home-button">
-                    返回首页
-                </button>
-                <button @click="toggleMode" :class="{ 'export-button': !isReviewMode }">
-                    {{ isReviewMode ? '返回答题' : '查看错题' }}
-                </button>
-                <button v-if="wrongQuestions.length > 0" 
-                        @click="generatePDF" 
-                        class="export-button">
-                    导出错题PDF
-                </button>
-            </div>
+<div id="app">
+    <div class="quiz-container" v-if="!isGeneratingPDF">
+        <h1>{{ subjectName }}题库</h1>
 
-            <!-- 答题模式 -->
-            <div v-if="!isReviewMode" class="quiz-layout">
-                <div class="quiz-main">
-                    <div class="stats">
-                        <div class="stat-item">
-                            <span class="stat-label">进度:</span>
-                            <span class="stat-value">{{ currentIndex + 1 }} / {{ questions.length }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">得分:</span>
-                            <span class="stat-value">{{ score }}</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">错题:</span>
-                            <span class="stat-value error-count">{{ wrongQuestions.length }}</span>
-                        </div>
+        <div class="mode-switch">
+            <button @click="goHome" class="home-button">
+                返回首页
+            </button>
+            <button @click="toggleMode" :class="{ 'export-button': !isReviewMode }">
+                {{ isReviewMode ? '返回答题' : '查看错题' }}
+            </button>
+            <button v-if="wrongQuestions.length > 0"
+                    @click="generatePDF"
+                    class="export-button">
+                导出错题PDF
+            </button>
+        </div>
+
+        <!-- 答题模式 -->
+        <div v-if="!isReviewMode" class="quiz-layout">
+            <div class="quiz-main">
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">进度:</span>
+                        <span class="stat-value">{{ currentIndex + 1 }} / {{ questions.length }}</span>
                     </div>
-
-                    <div class="progress-bar">
-                        <div class="progress" :style="{ width: progress + '%' }"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">得分:</span>
+                        <span class="stat-value">{{ score }}</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-label">错题:</span>
+                        <span class="stat-value error-count">{{ wrongQuestions.length }}</span>
+                    </div>
+                </div>
 
-                    <transition name="fade" mode="out-in">
-                        <div class="question-card" :key="currentIndex">
-                            <h2>{{ currentQuestion.question }}</h2>
-                            
-                            <!-- 选择题显示 -->
-                            <div v-if="currentQuestion.type !== 'blank'" class="options">
-                                <!-- 判断题显示 -->
-                                <div v-if="currentQuestion.type === 'judgment'" class="judgment-options">
-                                    <div v-for="(option, index) in ['正确', '错误']" 
-                                         :key="index"
-                                         class="option judgment-option"
-                                         :class="{
+                <div class="progress-bar">
+                    <div class="progress" :style="{ width: progress + '%' }"></div>
+                </div>
+
+                <transition name="fade" mode="out-in">
+                    <div class="question-card" :key="currentIndex">
+                        <h2>{{ currentQuestion.question }}</h2>
+
+                        <!-- 选择题显示 -->
+                        <div v-if="currentQuestion.type !== 'blank'" class="options">
+                            <!-- 判断题显示 -->
+                            <div v-if="currentQuestion.type === 'judgment'" class="judgment-options">
+                                <div v-for="(option, index) in ['正确', '错误']"
+                                     :key="index"
+                                     class="option judgment-option"
+                                     :class="{
                                              'selected': selectedAnswer === (index === 0 ? 'T' : 'F'),
                                              'correct': showAnswer && (index === 0 ? 'T' : 'F') === (currentQuestion.answer ? 'T' : 'F'),
                                              'incorrect': showAnswer && selectedAnswer === (index === 0 ? 'T' : 'F') && selectedAnswer !== (currentQuestion.answer ? 'T' : 'F'),
                                              'disabled': isQuestionAnswered(currentIndex)
                                          }"
-                                         @click="handleJudgmentClick(index === 0)">
-                                        {{ option }}
-                                    </div>
+                                     @click="handleJudgmentClick(index === 0)">
+                                    {{ option }}
                                 </div>
-                                <!-- 普通选择题显示 -->
-                                <div v-else class="choice-options">
-                                    <div v-for="(option, index) in currentQuestion.options" 
-                                         :key="index"
-                                         class="option"
-                                         :class="{
+                            </div>
+                            <!-- 普通选择题显示 -->
+                            <div v-else class="choice-options">
+                                <div v-for="(option, index) in currentQuestion.options"
+                                     :key="index"
+                                     class="option"
+                                     :class="{
                                              'selected': selectedAnswer === letters[index],
                                              'correct': showAnswer && letters[index] === currentQuestion.answer,
                                              'incorrect': showAnswer && selectedAnswer === letters[index] && selectedAnswer !== currentQuestion.answer,
                                              'previous-wrong': showAnswer && getPreviousAnswer(currentIndex) === letters[index] && letters[index] !== currentQuestion.answer,
                                              'disabled': isQuestionAnswered(currentIndex)
                                          }"
-                                         @click="handleOptionClick(letters[index])">
-                                        {{ letters[index] }}. {{ option }}
-                                    </div>
+                                     @click="handleOptionClick(letters[index])">
+                                    {{ letters[index] }}. {{ option }}
                                 </div>
                             </div>
-                            
-                            <!-- 填空题显示 -->
-                            <template v-if="currentQuestion.type === 'blank'">
-                                <div class="blank-container">
-                                    <div v-for="(_, index) in currentQuestion.blanks" 
-                                         :key="index" 
-                                         class="blank-item">
-                                        <span class="blank-number">{{ index + 1 }}</span>
-                                        <input 
-                                            type="text" 
+                        </div>
+
+                        <!-- 填空题显示 -->
+                        <template v-if="currentQuestion.type === 'blank'">
+                            <div class="blank-container">
+                                <div v-for="(_, index) in currentQuestion.blanks"
+                                     :key="index"
+                                     class="blank-item">
+                                    <span class="blank-number">{{ index + 1 }}</span>
+                                    <input
+                                            type="text"
                                             v-model="blankAnswers[index]"
                                             :disabled="showAnswer"
                                             class="blank-input"
@@ -831,259 +896,280 @@
                                             }"
                                             :placeholder="'请输入答案'"
                                             @keyup.enter="checkAnswerAndNext"
-                                        >
-                                        <span v-if="showAnswer" class="answer-feedback">
+                                    >
+                                    <span v-if="showAnswer" class="answer-feedback">
                                             <span :class="{ 'correct': isBlankCorrect(index), 'incorrect': !isBlankCorrect(index) }">
                                                 {{ isBlankCorrect(index) ? '✓' : '✗' }}
                                             </span>
                                             正确答案: {{ currentQuestion.blanks[index] }}
                                         </span>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- 解析显示 -->
-                            <div v-if="showAnswer" class="explanation">
-                                <h4>题目解析：</h4>
-                                <p>{{ currentQuestion.explanation }}</p>
-                            </div>
-                        </div>
-                    </transition>
-
-                    <div class="button-container">
-                        <button @click="previousQuestion">
-                            上一题
-                        </button>
-                        <button v-if="!showAnswer && currentIndex === questions.length - 1" 
-                                @click="checkAnswer" 
-                                :disabled="!canSubmit">
-                            提交答案
-                        </button>
-                        <button v-else-if="!showAnswer"
-                                @click="checkAnswerAndNext"
-                                :disabled="!canSubmit">
-                            下一题
-                        </button>
-                        <button v-else @click="nextQuestion" :disabled="currentIndex === questions.length - 1">
-                            下一题
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 题目目录侧边栏 -->
-                <div class="quiz-sidebar">
-                    <h3>题目导航</h3>
-                    
-                    <!-- 选择题导航 -->
-                    <div class="question-section" v-if="hasChoiceQuestions">
-                        <h4>选择题</h4>
-                        <div class="question-list-container">
-                            <div class="question-list">
-                                <div v-for="(question, index) in questions"
-                                     v-if="question.type !== 'blank'"
-                                     :key="index"
-                                     class="question-item"
-                                     :class="{
-                                         'answered': answeredQuestions[index],
-                                         'incorrect': isQuestionWrong(index),
-                                         'current': currentIndex === index
-                                     }"
-                                     @click="goToQuestion(index)"
-                                     :ref="currentIndex === index ? 'currentQuestion' : null">
-                                    {{ index + 1 }}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </template>
 
-                    <!-- 填空题导航 -->
-                    <div class="question-section" v-if="hasBlankQuestions">
-                        <h4>填空题</h4>
-                        <div class="question-list-container">
-                            <div class="question-list">
-                                <div v-for="(question, index) in questions"
-                                     v-if="question.type === 'blank'"
-                                     :key="index"
-                                     class="question-item"
-                                     :class="{
-                                         'answered': answeredQuestions[index],
-                                         'incorrect': isQuestionWrong(index),
-                                         'current': currentIndex === index
-                                     }"
-                                     @click="goToQuestion(index)"
-                                     :ref="currentIndex === index ? 'currentQuestion' : null">
-                                    {{ index + 1 }}
-                                </div>
-                            </div>
+                        <!-- 解析显示 -->
+                        <div v-if="showAnswer" class="explanation">
+                            <h4>题目解析：</h4>
+                            <p>{{ currentQuestion.explanation }}</p>
                         </div>
                     </div>
+                </transition>
+
+                <div class="button-container">
+                    <button @click="previousQuestion">
+                        上一题
+                    </button>
+                    <button v-if="!showAnswer && currentIndex === questions.length - 1"
+                            @click="checkAnswer"
+                            :disabled="!canSubmit">
+                        提交答案
+                    </button>
+                    <button v-else-if="!showAnswer"
+                            @click="checkAnswerAndNext"
+                            :disabled="!canSubmit">
+                        下一题
+                    </button>
+                    <button v-else @click="nextQuestion" :disabled="currentIndex === questions.length - 1">
+                        下一题
+                    </button>
                 </div>
             </div>
 
-            <!-- 错题复习模式 -->
-            <div v-else class="wrong-questions show">
-                <h2>错题记录 (共 {{ wrongQuestions.length }} 题)</h2>
-                <div v-for="(question, index) in wrongQuestions" 
-                     :key="index" 
-                     class="wrong-question-item">
-                    <h3>{{ index + 1 }}. {{ question.question }}</h3>
-                    <div class="options">
-                        <div v-for="(option, optIndex) in question.options" 
-                             :key="optIndex"
-                             class="option"
-                             :class="{
-                                 'correct': letters[optIndex] === question.answer,
-                                 'incorrect': letters[optIndex] === question.userAnswer
-                             }">
-                            {{ letters[optIndex] }}. {{ option }}
+            <!-- 题目目录侧边栏 -->
+            <div class="quiz-sidebar">
+                <h3>题目导航</h3>
+
+                <!-- 选择题导航 -->
+                <div class="question-section" v-if="hasChoiceQuestions">
+                    <h4>选择题</h4>
+                    <div class="question-list-container">
+                        <div class="question-list">
+                            <div v-for="(question, index) in questions"
+                                 v-if="question.type !== 'blank'"
+                                 :key="index"
+                                 class="question-item"
+                                 :class="{
+                                         'answered': answeredQuestions[index],
+                                         'incorrect': isQuestionWrong(index),
+                                         'current': currentIndex === index
+                                     }"
+                                 @click="goToQuestion(index)"
+                                 :ref="currentIndex === index ? 'currentQuestion' : null">
+                                {{ index + 1 }}
+                            </div>
                         </div>
                     </div>
-                    <div class="feedback incorrect">
-                        你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}
-                    </div>
-                    <div class="explanation">
-                        <h4>题目解析：</h4>
-                        <p>{{ question.explanation }}</p>
+                </div>
+
+                <!-- 填空题导航 -->
+                <div class="question-section" v-if="hasBlankQuestions">
+                    <h4>填空题</h4>
+                    <div class="question-list-container">
+                        <div class="question-list">
+                            <div v-for="(question, index) in questions"
+                                 v-if="question.type === 'blank'"
+                                 :key="index"
+                                 class="question-item"
+                                 :class="{
+                                         'answered': answeredQuestions[index],
+                                         'incorrect': isQuestionWrong(index),
+                                         'current': currentIndex === index
+                                     }"
+                                 @click="goToQuestion(index)"
+                                 :ref="currentIndex === index ? 'currentQuestion' : null">
+                                {{ index + 1 }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PDF导出用的隐藏内容 -->
-        <div id="pdf-content" class="pdf-content" :class="{ show: isGeneratingPDF }">
-            <h1 style="text-align: center;">数据库选择题 - 错题记录</h1>
-            <div v-for="(question, index) in wrongQuestions" :key="index" class="wrong-question-pdf">
+        <!-- 错题复习模式 -->
+        <div v-else class="wrong-questions show">
+            <h2>错题记录 (共 {{ wrongQuestions.length }} 题)</h2>
+            <div v-for="(question, index) in wrongQuestions"
+                 :key="index"
+                 class="wrong-question-item">
                 <h3>{{ index + 1 }}. {{ question.question }}</h3>
-                <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-pdf"
-                     :class="{
-                         'correct-answer': letters[optIndex] === question.answer,
-                         'wrong-answer': letters[optIndex] === question.userAnswer && letters[optIndex] !== question.answer
-                     }">
-                    {{ letters[optIndex] }}. {{ option }}
+                <div class="options">
+                    <div v-for="(option, optIndex) in question.options"
+                         :key="optIndex"
+                         class="option"
+                         :class="{
+                                 'correct': letters[optIndex] === question.answer,
+                                 'incorrect': letters[optIndex] === question.userAnswer
+                             }">
+                        {{ letters[optIndex] }}. {{ option }}
+                    </div>
                 </div>
-                <p><strong>你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}</strong></p>
-                <div class="explanation-pdf">
+                <div class="feedback incorrect">
+                    你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}
+                </div>
+                <div class="explanation">
                     <h4>题目解析：</h4>
                     <p>{{ question.explanation }}</p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- 添加模态框组件 -->
-        <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-            <div class="modal-container">
-                <div class="modal-title">确认返回</div>
-                <div class="modal-content">
-                    返回首页将丢失当前答题进度，确定要返回吗？
-                </div>
-                <div class="modal-buttons">
-                    <button class="modal-button modal-cancel" @click="closeModal">
-                        取消
-                    </button>
-                    <button class="modal-button modal-confirm" @click="confirmGoHome">
-                        确定
-                    </button>
-                </div>
+    <!-- PDF导出用的隐藏内容 -->
+    <div id="pdf-content" class="pdf-content" :class="{ show: isGeneratingPDF }">
+        <h1 style="text-align: center;">数据库选择题 - 错题记录</h1>
+        <div v-for="(question, index) in wrongQuestions" :key="index" class="wrong-question-pdf">
+            <h3>{{ index + 1 }}. {{ question.question }}</h3>
+            <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-pdf"
+                 :class="{
+                         'correct-answer': letters[optIndex] === question.answer,
+                         'wrong-answer': letters[optIndex] === question.userAnswer && letters[optIndex] !== question.answer
+                     }">
+                {{ letters[optIndex] }}. {{ option }}
+            </div>
+            <p><strong>你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}</strong></p>
+            <div class="explanation-pdf">
+                <h4>题目解析：</h4>
+                <p>{{ question.explanation }}</p>
             </div>
         </div>
     </div>
 
-    <script>
-        new Vue({
-            el: '#app',
-            data: {
-                questions: [],  // 初始化为空数组
-                currentIndex: 0,
-                selectedAnswer: '',
-                showAnswer: false,
-                score: 0,
-                wrongQuestions: [],
-                isReviewMode: false,
-                isGeneratingPDF: false,
-                answeredQuestions: {},
-                blankAnswers: [],
-                letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-                showModal: false
+    <!-- 添加模态框组件 -->
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+        <div class="modal-container">
+            <div class="modal-title">确认返回</div>
+            <div class="modal-content">
+                返回首页将丢失当前答题进度，确定要返回吗？
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button modal-cancel" @click="closeModal">
+                    取消
+                </button>
+                <button class="modal-button modal-confirm" @click="confirmGoHome">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            questions: [],  // 初始化为空数组
+            currentIndex: 0,
+            selectedAnswer: '',
+            showAnswer: false,
+            score: 0,
+            wrongQuestions: [],
+            isReviewMode: false,
+            isGeneratingPDF: false,
+            answeredQuestions: {},
+            blankAnswers: [],
+            letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+            showModal: false,
+            subjectName: '在线题库'
+        },
+        computed: {
+            currentQuestion() {
+                return this.questions[this.currentIndex];
             },
-            computed: {
-                currentQuestion() {
-                    return this.questions[this.currentIndex];
-                },
-                progress() {
-                    return ((this.currentIndex + 1) / this.questions.length) * 100;
-                },
-                isCorrect() {
-                    return this.selectedAnswer === this.currentQuestion.answer;
-                },
-                canSubmit() {
-                    if (this.currentQuestion.type === 'blank') {
-                        return this.currentQuestion.blanks.every((_, index) => 
-                            this.blankAnswers[index] && this.blankAnswers[index].trim() !== ''
-                        );
-                    } else if (this.currentQuestion.type === 'judgment') {
-                        return this.selectedAnswer === 'T' || this.selectedAnswer === 'F';
-                    } else {
-                        return !!this.selectedAnswer;
-                    }
-                },
-                hasChoiceQuestions() {
-                    return this.questions.some(q => q.type !== 'blank');
-                },
-                hasBlankQuestions() {
-                    return this.questions.some(q => q.type === 'blank');
+            progress() {
+                return ((this.currentIndex + 1) / this.questions.length) * 100;
+            },
+            isCorrect() {
+                return this.selectedAnswer === this.currentQuestion.answer;
+            },
+            canSubmit() {
+                if (this.currentQuestion.type === 'blank') {
+                    return this.currentQuestion.blanks.every((_, index) =>
+                        this.blankAnswers[index] && this.blankAnswers[index].trim() !== ''
+                    );
+                } else if (this.currentQuestion.type === 'judgment') {
+                    return this.selectedAnswer === 'T' || this.selectedAnswer === 'F';
+                } else {
+                    return !!this.selectedAnswer;
                 }
             },
-            methods: {
-                handleOptionClick(letter) {
-                    if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
-                        this.selectedAnswer = letter;
-                        if (this.isMobile()) {
-                            this.checkAnswerAndNext();
+            hasChoiceQuestions() {
+                return this.questions.some(q => q.type !== 'blank');
+            },
+            hasBlankQuestions() {
+                return this.questions.some(q => q.type === 'blank');
+            }
+        },
+        methods: {
+            handleOptionClick(letter) {
+                if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
+                    this.selectedAnswer = letter;
+                    if (this.isMobile()) {
+                        this.checkAnswerAndNext();
+                    }
+                }
+            },
+            isQuestionAnswered(index) {
+                return this.answeredQuestions[index]?.answered === true;
+            },
+            isQuestionWrong(index) {
+                return this.wrongQuestions.some(q => q.id === this.questions[index].id);
+            },
+            goToQuestion(index) {
+                this.currentIndex = index;
+                this.showAnswer = this.isQuestionAnswered(index);
+                this.resetAnswers();
+                if (this.showAnswer) {
+                    if (this.currentQuestion.type === 'blank') {
+                        this.blankAnswers = [...this.answeredQuestions[index].blankAnswers];
+                    } else {
+                        this.selectedAnswer = this.answeredQuestions[index].selectedAnswer;
+                    }
+                }
+                this.scrollToCurrentQuestion();
+            },
+            resetAnswers() {
+                this.selectedAnswer = '';
+                this.blankAnswers = Array(this.currentQuestion.type === 'blank' ?
+                    this.currentQuestion.blanks.length : 0).fill('');
+            },
+            checkAnswer() {
+                if (this.currentQuestion.type === 'judgment') {
+                    if (!this.selectedAnswer) return;
+
+                    this.showAnswer = true;
+                    this.answeredQuestions[this.currentIndex] = {
+                        answered: true,
+                        selectedAnswer: this.selectedAnswer
+                    };
+
+                    const isCorrect = (this.selectedAnswer === 'T') === this.currentQuestion.answer;
+                    if (isCorrect) {
+                        this.score++;
+                    } else {
+                        const wrongQuestion = {
+                            ...this.currentQuestion,
+                            userAnswer: this.selectedAnswer === 'T' ? '正确' : '错误',
+                            answer: this.currentQuestion.answer ? '正确' : '错误'
+                        };
+                        const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                        if (!exists) {
+                            this.wrongQuestions.push(wrongQuestion);
                         }
                     }
-                },
-                isQuestionAnswered(index) {
-                    return this.answeredQuestions[index]?.answered === true;
-                },
-                isQuestionWrong(index) {
-                    return this.wrongQuestions.some(q => q.id === this.questions[index].id);
-                },
-                goToQuestion(index) {
-                    this.currentIndex = index;
-                    this.showAnswer = this.isQuestionAnswered(index);
-                    this.resetAnswers();
-                    if (this.showAnswer) {
-                        if (this.currentQuestion.type === 'blank') {
-                            this.blankAnswers = [...this.answeredQuestions[index].blankAnswers];
-                        } else {
-                            this.selectedAnswer = this.answeredQuestions[index].selectedAnswer;
-                        }
-                    }
-                    this.scrollToCurrentQuestion();
-                },
-                resetAnswers() {
-                    this.selectedAnswer = '';
-                    this.blankAnswers = Array(this.currentQuestion.type === 'blank' ? 
-                        this.currentQuestion.blanks.length : 0).fill('');
-                },
-                checkAnswer() {
-                    if (this.currentQuestion.type === 'judgment') {
-                        if (!this.selectedAnswer) return;
-                        
+                } else {
+                    if (this.currentQuestion.type === 'blank') {
                         this.showAnswer = true;
                         this.answeredQuestions[this.currentIndex] = {
                             answered: true,
-                            selectedAnswer: this.selectedAnswer
+                            blankAnswers: [...this.blankAnswers]
                         };
-                        
-                        const isCorrect = (this.selectedAnswer === 'T') === this.currentQuestion.answer;
-                        if (isCorrect) {
+
+                        if (this.checkBlankAnswers()) {
                             this.score++;
                         } else {
                             const wrongQuestion = {
                                 ...this.currentQuestion,
-                                userAnswer: this.selectedAnswer === 'T' ? '正确' : '错误',
-                                answer: this.currentQuestion.answer ? '正确' : '错误'
+                                userAnswers: [...this.blankAnswers]
                             };
                             const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
                             if (!exists) {
@@ -1091,224 +1177,219 @@
                             }
                         }
                     } else {
-                        if (this.currentQuestion.type === 'blank') {
-                            this.showAnswer = true;
-                            this.answeredQuestions[this.currentIndex] = {
-                                answered: true,
-                                blankAnswers: [...this.blankAnswers]
-                            };
-                            
-                            if (this.checkBlankAnswers()) {
-                                this.score++;
-                            } else {
-                                const wrongQuestion = {
-                                    ...this.currentQuestion,
-                                    userAnswers: [...this.blankAnswers]
-                                };
-                                const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
-                                if (!exists) {
-                                    this.wrongQuestions.push(wrongQuestion);
-                                }
-                            }
-                        } else {
-                            if (!this.selectedAnswer) return;
-                            
-                            this.showAnswer = true;
-                            this.answeredQuestions[this.currentIndex] = {
-                                answered: true,
-                                selectedAnswer: this.selectedAnswer
-                            };
-                            
-                            if (this.isCorrect) {
-                                this.score++;
-                            } else {
-                                const wrongQuestion = {
-                                    ...this.currentQuestion,
-                                    userAnswer: this.selectedAnswer
-                                };
-                                const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
-                                if (!exists) {
-                                    this.wrongQuestions.push(wrongQuestion);
-                                }
-                            }
-                        }
-                    }
-                },
-                checkAnswerAndNext() {
-                    this.checkAnswer();
-                    if (this.isCorrect && this.currentIndex < this.questions.length - 1) {
-                        setTimeout(() => {
-                            this.nextQuestion();
-                        }, 800);
-                    }
-                },
-                nextQuestion() {
-                    if (this.currentIndex < this.questions.length - 1) {
-                        this.currentIndex++;
-                        this.showAnswer = this.isQuestionAnswered(this.currentIndex);
-                        this.resetAnswers();
-                        if (this.showAnswer) {
-                            if (this.currentQuestion.type === 'blank') {
-                                this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
-                            } else {
-                                this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
-                            }
-                        }
-                        this.scrollToCurrentQuestion();
-                    }
-                },
-                previousQuestion() {
-                    if (this.currentIndex > 0) {
-                        this.currentIndex--;
-                        this.showAnswer = this.isQuestionAnswered(this.currentIndex);
-                        this.resetAnswers();
-                        if (this.showAnswer) {
-                            if (this.currentQuestion.type === 'blank') {
-                                this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
-                            } else {
-                                this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
-                            }
-                        }
-                    }
-                },
-                toggleMode() {
-                    this.isReviewMode = !this.isReviewMode;
-                    if (!this.isReviewMode) {
-                        this.resetQuestion();
-                    }
-                },
-                resetQuestion() {
-                    this.selectedAnswer = '';
-                    this.blankAnswers = [];
-                    this.showAnswer = false;
-                },
-                async generatePDF() {
-                    if (this.isMobile()) {
-                        alert('建议在电脑端导出PDF以获得更好的效果');
-                    }
-                    try {
-                        this.isGeneratingPDF = true;
-                        await this.$nextTick();
-                        
-                        const element = document.getElementById('pdf-content');
-                        const opt = {
-                            margin: 10,
-                            filename: `错题记录_${new Date().toISOString().slice(0,19).replace(/[-:]/g, '').replace('T', '_')}.pdf`,
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { 
-                                scale: 2,
-                                useCORS: true,
-                                logging: false
-                            },
-                            jsPDF: { 
-                                unit: 'mm', 
-                                format: 'a4', 
-                                orientation: 'portrait' 
-                            }
+                        if (!this.selectedAnswer) return;
+
+                        this.showAnswer = true;
+                        this.answeredQuestions[this.currentIndex] = {
+                            answered: true,
+                            selectedAnswer: this.selectedAnswer
                         };
 
-                        await html2pdf().set(opt).from(element).save();
-                        this.isGeneratingPDF = false;
-                    } catch (error) {
-                        console.error('生成PDF时出错:', error);
-                        alert('生成PDF时出错，请稍后重试');
-                        this.isGeneratingPDF = false;
-                    }
-                },
-                getPreviousAnswer(index) {
-                    return this.answeredQuestions[index]?.selectedAnswer;
-                },
-                isBlankCorrect(index) {
-                    if (this.currentQuestion.id === 88) {
-                        const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
-                        return correctAnswersSet.has(this.blankAnswers[index].trim().toLowerCase());
-                    }
-                    return this.blankAnswers[index].trim().toLowerCase() === this.currentQuestion.blanks[index].toLowerCase();
-                },
-                checkBlankAnswers() {
-                    if (this.currentQuestion.type !== 'blank') return true;
-                    
-                    const userAnswersSet = new Set(this.blankAnswers.map(ans => ans.trim().toLowerCase()));
-                    const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
-                    
-                    return userAnswersSet.size === correctAnswersSet.size &&
-                           [...userAnswersSet].every(ans => correctAnswersSet.has(ans));
-                },
-                isMobile() {
-                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                },
-                goHome() {
-                    if (Object.keys(this.answeredQuestions).length > 0 && !this.isReviewMode) {
-                        this.showModal = true;
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                },
-                closeModal() {
-                    this.showModal = false;
-                },
-                confirmGoHome() {
-                    this.showModal = false;
-                    window.location.href = 'index.html';
-                },
-                handleJudgmentClick(isTrue) {
-                    if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
-                        this.selectedAnswer = isTrue ? 'T' : 'F';
-                        if (this.isMobile()) {
-                            this.checkAnswerAndNext();
+                        if (this.isCorrect) {
+                            this.score++;
+                        } else {
+                            const wrongQuestion = {
+                                ...this.currentQuestion,
+                                userAnswer: this.selectedAnswer
+                            };
+                            const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                            if (!exists) {
+                                this.wrongQuestions.push(wrongQuestion);
+                            }
                         }
                     }
-                },
-                scrollToCurrentQuestion() {
-                    this.$nextTick(() => {
-                        const currentQuestionRef = this.$refs.currentQuestion;
-                        if (currentQuestionRef && currentQuestionRef[0]) {
-                            currentQuestionRef[0].scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'nearest'
-                            });
-                        }
-                    });
                 }
             },
-            created() {
-                // 获取题目数据
-                const quizData = localStorage.getItem('quizData');
-                if (!quizData) {
-                    alert('未找到题目数据，请返回首页重新选择');
-                    window.location.href = 'index.html';
-                    return;
+            checkAnswerAndNext() {
+                this.checkAnswer();
+                if (this.isCorrect && this.currentIndex < this.questions.length - 1) {
+                    setTimeout(() => {
+                        this.nextQuestion();
+                    }, 800);
                 }
-
-                // 解析题目数据
-                try {
-                    const data = JSON.parse(quizData);
-                    // 确保从 JSON 中获取正确的 questions 数组
-                    this.questions = data.questions || [];
-                    
-                    if (!this.questions.length) {
-                        throw new Error('题目数据为空');
+            },
+            nextQuestion() {
+                if (this.currentIndex < this.questions.length - 1) {
+                    this.currentIndex++;
+                    this.showAnswer = this.isQuestionAnswered(this.currentIndex);
+                    this.resetAnswers();
+                    if (this.showAnswer) {
+                        if (this.currentQuestion.type === 'blank') {
+                            this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
+                        } else {
+                            this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
+                        }
                     }
-                } catch (error) {
-                    console.error('解析题目数据失败:', error);
-                    alert('题目数据格式错误，请返回首页重新选择');
-                    window.location.href = 'index.html';
-                    return;
+                    this.scrollToCurrentQuestion();
                 }
-
-                // 初始化其他数据
-                this.wrongQuestions = [];
-                this.currentIndex = 0;
+            },
+            previousQuestion() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    this.showAnswer = this.isQuestionAnswered(this.currentIndex);
+                    this.resetAnswers();
+                    if (this.showAnswer) {
+                        if (this.currentQuestion.type === 'blank') {
+                            this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
+                        } else {
+                            this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
+                        }
+                    }
+                }
+            },
+            toggleMode() {
+                this.isReviewMode = !this.isReviewMode;
+                if (!this.isReviewMode) {
+                    this.resetQuestion();
+                }
+            },
+            resetQuestion() {
                 this.selectedAnswer = '';
-                this.showAnswer = false;
-                this.score = 0;
-                this.isReviewMode = false;
-                this.isGeneratingPDF = false;
-                this.answeredQuestions = {};
                 this.blankAnswers = [];
-                this.resetAnswers();
+                this.showAnswer = false;
+            },
+            async generatePDF() {
+                if (this.isMobile()) {
+                    alert('建议在电脑端导出PDF以获得更好的效果');
+                }
+                try {
+                    this.isGeneratingPDF = true;
+                    await this.$nextTick();
+
+                    const element = document.getElementById('pdf-content');
+                    const opt = {
+                        margin: 10,
+                        filename: `错题记录_${new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_')}.pdf`,
+                        image: {type: 'jpeg', quality: 0.98},
+                        html2canvas: {
+                            scale: 2,
+                            useCORS: true,
+                            logging: false
+                        },
+                        jsPDF: {
+                            unit: 'mm',
+                            format: 'a4',
+                            orientation: 'portrait'
+                        }
+                    };
+
+                    await html2pdf().set(opt).from(element).save();
+                    this.isGeneratingPDF = false;
+                } catch (error) {
+                    console.error('生成PDF时出错:', error);
+                    alert('生成PDF时出错，请稍后重试');
+                    this.isGeneratingPDF = false;
+                }
+            },
+            getPreviousAnswer(index) {
+                return this.answeredQuestions[index]?.selectedAnswer;
+            },
+            isBlankCorrect(index) {
+                if (this.currentQuestion.id === 88) {
+                    const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+                    return correctAnswersSet.has(this.blankAnswers[index].trim().toLowerCase());
+                }
+                return this.blankAnswers[index].trim().toLowerCase() === this.currentQuestion.blanks[index].toLowerCase();
+            },
+            checkBlankAnswers() {
+                if (this.currentQuestion.type !== 'blank') return true;
+
+                const userAnswersSet = new Set(this.blankAnswers.map(ans => ans.trim().toLowerCase()));
+                const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+
+                return userAnswersSet.size === correctAnswersSet.size &&
+                    [...userAnswersSet].every(ans => correctAnswersSet.has(ans));
+            },
+            isMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            },
+            goHome() {
+                if (Object.keys(this.answeredQuestions).length > 0 && !this.isReviewMode) {
+                    this.showModal = true;
+                } else {
+                    window.location.href = 'index.html';
+                }
+            },
+            closeModal() {
+                this.showModal = false;
+            },
+            confirmGoHome() {
+                this.showModal = false;
+                window.location.href = 'index.html';
+            },
+            handleJudgmentClick(isTrue) {
+                if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
+                    this.selectedAnswer = isTrue ? 'T' : 'F';
+                    if (this.isMobile()) {
+                        this.checkAnswerAndNext();
+                    }
+                }
+            },
+            scrollToCurrentQuestion() {
+                this.$nextTick(() => {
+                    const currentQuestionRef = this.$refs.currentQuestion;
+                    if (currentQuestionRef && currentQuestionRef[0]) {
+                        currentQuestionRef[0].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        });
+                    }
+                });
             }
-        });
-    </script>
+        },
+        created() {
+            // 获取题目数据
+            const quizData = localStorage.getItem('quizData');
+            const selectedSubject = localStorage.getItem('selectedSubject');
+            
+            if (!quizData || !selectedSubject) {
+                alert('未找到题目数据，请返回首页重新选择');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // 根据 selectedSubject 设置标题
+            switch(selectedSubject) {
+                case 'database':
+                    this.subjectName = '数据库';
+                    break;
+                case 'os':
+                    this.subjectName = '操作系统';
+                    break;
+                // 可以添加更多科目
+                default:
+                    this.subjectName = '在线题库';
+            }
+
+            // 解析题目数据
+            try {
+                const data = JSON.parse(quizData);
+                // 确保从 JSON 中获取正确的 questions 数组
+                this.questions = data.questions || [];
+
+                if (!this.questions.length) {
+                    throw new Error('题目数据为空');
+                }
+            } catch (error) {
+                console.error('解析题目数据失败:', error);
+                alert('题目数据格式错误，请返回首页重新选择');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // 初始化其他数据
+            this.wrongQuestions = [];
+            this.currentIndex = 0;
+            this.selectedAnswer = '';
+            this.showAnswer = false;
+            this.score = 0;
+            this.isReviewMode = false;
+            this.isGeneratingPDF = false;
+            this.answeredQuestions = {};
+            this.blankAnswers = [];
+            this.resetAnswers();
+        }
+    });
+</script>
 </body>
 </html>

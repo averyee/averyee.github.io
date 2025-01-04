@@ -117,15 +117,15 @@
                         id: 'database',
                         name: '数据库',
                         icon: '📚',
-                        questionCount: 88,
+                        questionCount: 0,
                         dataFile: './data/database_questions.json'
                     },
                     {
-                        id: 'network',
-                        name: '计算机网络',
-                        icon: '🌐',
-                        questionCount: 100,
-                        dataFile: './data/network_questions.json'
+                        id: 'os',
+                        name: '操作系统',
+                        icon: '💻',
+                        questionCount: 0,
+                        dataFile: './data/os-questions.json'
                     }
                 ]
             },
@@ -133,7 +133,6 @@
                 startQuiz(subject) {
                     localStorage.setItem('selectedSubject', subject.id);
                     
-                    // 使用相对路径加载数据
                     fetch(subject.dataFile)
                         .then(response => {
                             if (!response.ok) {
@@ -149,7 +148,24 @@
                             console.error('加载题目数据失败:', error);
                             alert('加载题目数据失败，请确保数据文件存在且格式正确');
                         });
+                },
+                loadQuestionCount() {
+                    this.subjects.forEach(subject => {
+                        fetch(subject.dataFile)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.questions && Array.isArray(data.questions)) {
+                                    subject.questionCount = data.questions.length;
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`加载${subject.name}题目数量失败:`, error);
+                            });
+                    });
                 }
+            },
+            created() {
+                this.loadQuestionCount();
             }
         });
     </script>

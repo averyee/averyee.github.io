@@ -517,6 +517,181 @@
             line-height: 1.5;
             color: #333;
         }
+
+        .blank-input {
+            display: inline-block;
+            margin: 0 8px;
+            padding: 8px 12px;
+            min-width: 120px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .blank-input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .blank-input.correct {
+            border-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+
+        .blank-input.incorrect {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .blank-container {
+            margin: 25px 0;
+        }
+
+        .blank-item {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .blank-number {
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            background-color: #2196f3;
+            color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .blank-input {
+            width: 300px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+            margin-right: 15px;
+        }
+
+        .blank-input:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .blank-input.correct {
+            border-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+
+        .blank-input.incorrect {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .answer-feedback {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .answer-feedback .correct {
+            color: #4caf50;
+            margin-right: 8px;
+        }
+
+        .answer-feedback .incorrect {
+            color: #f44336;
+            margin-right: 8px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .blank-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .blank-input {
+                width: 100%;
+            }
+
+            .answer-feedback {
+                margin-left: 43px;  /* 28px(图标宽度) + 15px(右边距) */
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #f57c00;
+            margin-bottom: 15px;
+        }
+
+        .modal-content {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-cancel {
+            background-color: #e0e0e0;
+            color: #666;
+        }
+
+        .modal-cancel:hover {
+            background-color: #bdbdbd;
+        }
+
+        .modal-confirm {
+            background-color: #f57c00;
+            color: white;
+        }
+
+        .modal-confirm:hover {
+            background-color: #ef6c00;
+        }
     </style>
 </head>
 <body>
@@ -582,23 +757,33 @@
                             </div>
                             
                             <!-- 填空题显示 -->
-                            <div v-else class="blanks">
-                                <div v-for="(blank, index) in currentQuestion.blanks" 
-                                     :key="index" 
-                                     class="blank-item">
-                                    <input type="text" 
-                                           v-model="blankAnswers[index]"
-                                           :disabled="showAnswer"
-                                           :class="{ 
-                                               'correct': showAnswer && isBlankCorrect(index),
-                                               'incorrect': showAnswer && !isBlankCorrect(index)
-                                           }"
-                                           @keyup.enter="checkAnswerAndNext">
-                                    <span v-if="showAnswer" class="correct-answer">
-                                        正确答案: {{ blank }}
-                                    </span>
+                            <template v-if="currentQuestion.type === 'blank'">
+                                <div class="blank-container">
+                                    <div v-for="(_, index) in currentQuestion.blanks" 
+                                         :key="index" 
+                                         class="blank-item">
+                                        <span class="blank-number">{{ index + 1 }}</span>
+                                        <input 
+                                            type="text" 
+                                            v-model="blankAnswers[index]"
+                                            :disabled="showAnswer"
+                                            class="blank-input"
+                                            :class="{
+                                                'correct': showAnswer && isBlankCorrect(index),
+                                                'incorrect': showAnswer && !isBlankCorrect(index)
+                                            }"
+                                            :placeholder="'请输入答案'"
+                                            @keyup.enter="checkAnswerAndNext"
+                                        >
+                                        <span v-if="showAnswer" class="answer-feedback">
+                                            <span :class="{ 'correct': isBlankCorrect(index), 'incorrect': !isBlankCorrect(index) }">
+                                                {{ isBlankCorrect(index) ? '✓' : '✗' }}
+                                            </span>
+                                            正确答案: {{ currentQuestion.blanks[index] }}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
 
                             <!-- 解析显示 -->
                             <div v-if="showAnswer" class="explanation">
@@ -720,6 +905,24 @@
                 </div>
             </div>
         </div>
+
+        <!-- 添加模态框组件 -->
+        <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+            <div class="modal-container">
+                <div class="modal-title">确认返回</div>
+                <div class="modal-content">
+                    返回首页将丢失当前答题进度，确定要返回吗？
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-button modal-cancel" @click="closeModal">
+                        取消
+                    </button>
+                    <button class="modal-button modal-confirm" @click="confirmGoHome">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -736,7 +939,8 @@
                 isGeneratingPDF: false,
                 answeredQuestions: {},
                 blankAnswers: [],
-                letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+                letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+                showModal: false
             },
             computed: {
                 currentQuestion() {
@@ -936,11 +1140,17 @@
                     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 },
                 goHome() {
-                    // 如果有未保存的答题记录，提示用户
                     if (Object.keys(this.answeredQuestions).length > 0 && !this.isReviewMode) {
-                        const confirm = window.confirm('返回首页将丢失当前答题进度，确定要返回吗？');
-                        if (!confirm) return;
+                        this.showModal = true;
+                    } else {
+                        window.location.href = 'index.html';
                     }
+                },
+                closeModal() {
+                    this.showModal = false;
+                },
+                confirmGoHome() {
+                    this.showModal = false;
                     window.location.href = 'index.html';
                 }
             },

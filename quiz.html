@@ -206,6 +206,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             height: fit-content;
+            position: sticky;  /* 使侧边栏固定 */
+            top: 20px;        /* 距离顶部距离 */
         }
         .question-section {
             margin-bottom: 20px;
@@ -216,11 +218,33 @@
             border-bottom: 2px solid #2196f3;
             color: #1976d2;
         }
+        .question-list-container {
+            max-height: 200px;    /* 设置固定高度 */
+            overflow-y: auto;     /* 允许垂直滚动 */
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            position: relative;
+        }
+        /* 自定义滚动条样式 */
+        .question-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .question-list-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .question-list-container::-webkit-scrollbar-thumb {
+            background: #2196f3;
+            border-radius: 3px;
+        }
+        .question-list-container::-webkit-scrollbar-thumb:hover {
+            background: #1976d2;
+        }
         .question-list {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 8px;
-            margin-bottom: 15px;
         }
         .question-item {
             padding: 8px 4px;
@@ -692,6 +716,21 @@
         .modal-confirm:hover {
             background-color: #ef6c00;
         }
+
+        .judgment-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .judgment-option {
+            width: 120px;
+            text-align: center;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -741,18 +780,36 @@
                             
                             <!-- 选择题显示 -->
                             <div v-if="currentQuestion.type !== 'blank'" class="options">
-                                <div v-for="(option, index) in currentQuestion.options" 
-                                     :key="index"
-                                     class="option"
-                                     :class="{
-                                         'selected': selectedAnswer === letters[index],
-                                         'correct': showAnswer && letters[index] === currentQuestion.answer,
-                                         'incorrect': showAnswer && selectedAnswer === letters[index] && selectedAnswer !== currentQuestion.answer,
-                                         'previous-wrong': showAnswer && getPreviousAnswer(currentIndex) === letters[index] && letters[index] !== currentQuestion.answer,
-                                         'disabled': isQuestionAnswered(currentIndex)
-                                     }"
-                                     @click="handleOptionClick(letters[index])">
-                                    {{ letters[index] }}. {{ option }}
+                                <!-- 判断题显示 -->
+                                <div v-if="currentQuestion.type === 'judgment'" class="judgment-options">
+                                    <div v-for="(option, index) in ['正确', '错误']" 
+                                         :key="index"
+                                         class="option judgment-option"
+                                         :class="{
+                                             'selected': selectedAnswer === (index === 0 ? 'T' : 'F'),
+                                             'correct': showAnswer && (index === 0 ? 'T' : 'F') === (currentQuestion.answer ? 'T' : 'F'),
+                                             'incorrect': showAnswer && selectedAnswer === (index === 0 ? 'T' : 'F') && selectedAnswer !== (currentQuestion.answer ? 'T' : 'F'),
+                                             'disabled': isQuestionAnswered(currentIndex)
+                                         }"
+                                         @click="handleJudgmentClick(index === 0)">
+                                        {{ option }}
+                                    </div>
+                                </div>
+                                <!-- 普通选择题显示 -->
+                                <div v-else class="choice-options">
+                                    <div v-for="(option, index) in currentQuestion.options" 
+                                         :key="index"
+                                         class="option"
+                                         :class="{
+                                             'selected': selectedAnswer === letters[index],
+                                             'correct': showAnswer && letters[index] === currentQuestion.answer,
+                                             'incorrect': showAnswer && selectedAnswer === letters[index] && selectedAnswer !== currentQuestion.answer,
+                                             'previous-wrong': showAnswer && getPreviousAnswer(currentIndex) === letters[index] && letters[index] !== currentQuestion.answer,
+                                             'disabled': isQuestionAnswered(currentIndex)
+                                         }"
+                                         @click="handleOptionClick(letters[index])">
+                                        {{ letters[index] }}. {{ option }}
+                                    </div>
                                 </div>
                             </div>
                             
@@ -818,39 +875,45 @@
                     <h3>题目导航</h3>
                     
                     <!-- 选择题导航 -->
-                    <div class="question-section">
+                    <div class="question-section" v-if="hasChoiceQuestions">
                         <h4>选择题</h4>
-                        <div class="question-list">
-                            <div v-for="(question, index) in questions"
-                                 v-if="question.type !== 'blank'"
-                                 :key="index"
-                                 class="question-item"
-                                 :class="{
-                                     'answered': answeredQuestions[index],
-                                     'incorrect': isQuestionWrong(index),
-                                     'current': currentIndex === index
-                                 }"
-                                 @click="goToQuestion(index)">
-                                {{ index + 1 }}
+                        <div class="question-list-container">
+                            <div class="question-list">
+                                <div v-for="(question, index) in questions"
+                                     v-if="question.type !== 'blank'"
+                                     :key="index"
+                                     class="question-item"
+                                     :class="{
+                                         'answered': answeredQuestions[index],
+                                         'incorrect': isQuestionWrong(index),
+                                         'current': currentIndex === index
+                                     }"
+                                     @click="goToQuestion(index)"
+                                     :ref="currentIndex === index ? 'currentQuestion' : null">
+                                    {{ index + 1 }}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 填空题导航 -->
-                    <div class="question-section">
+                    <div class="question-section" v-if="hasBlankQuestions">
                         <h4>填空题</h4>
-                        <div class="question-list">
-                            <div v-for="(question, index) in questions"
-                                 v-if="question.type === 'blank'"
-                                 :key="index"
-                                 class="question-item"
-                                 :class="{
-                                     'answered': answeredQuestions[index],
-                                     'incorrect': isQuestionWrong(index),
-                                     'current': currentIndex === index
-                                 }"
-                                 @click="goToQuestion(index)">
-                                {{ index + 1 }}
+                        <div class="question-list-container">
+                            <div class="question-list">
+                                <div v-for="(question, index) in questions"
+                                     v-if="question.type === 'blank'"
+                                     :key="index"
+                                     class="question-item"
+                                     :class="{
+                                         'answered': answeredQuestions[index],
+                                         'incorrect': isQuestionWrong(index),
+                                         'current': currentIndex === index
+                                     }"
+                                     @click="goToQuestion(index)"
+                                     :ref="currentIndex === index ? 'currentQuestion' : null">
+                                    {{ index + 1 }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -957,9 +1020,17 @@
                         return this.currentQuestion.blanks.every((_, index) => 
                             this.blankAnswers[index] && this.blankAnswers[index].trim() !== ''
                         );
+                    } else if (this.currentQuestion.type === 'judgment') {
+                        return this.selectedAnswer === 'T' || this.selectedAnswer === 'F';
                     } else {
                         return !!this.selectedAnswer;
                     }
+                },
+                hasChoiceQuestions() {
+                    return this.questions.some(q => q.type !== 'blank');
+                },
+                hasBlankQuestions() {
+                    return this.questions.some(q => q.type === 'blank');
                 }
             },
             methods: {
@@ -988,6 +1059,7 @@
                             this.selectedAnswer = this.answeredQuestions[index].selectedAnswer;
                         }
                     }
+                    this.scrollToCurrentQuestion();
                 },
                 resetAnswers() {
                     this.selectedAnswer = '';
@@ -995,26 +1067,7 @@
                         this.currentQuestion.blanks.length : 0).fill('');
                 },
                 checkAnswer() {
-                    if (this.currentQuestion.type === 'blank') {
-                        this.showAnswer = true;
-                        this.answeredQuestions[this.currentIndex] = {
-                            answered: true,
-                            blankAnswers: [...this.blankAnswers]
-                        };
-                        
-                        if (this.checkBlankAnswers()) {
-                            this.score++;
-                        } else {
-                            const wrongQuestion = {
-                                ...this.currentQuestion,
-                                userAnswers: [...this.blankAnswers]
-                            };
-                            const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
-                            if (!exists) {
-                                this.wrongQuestions.push(wrongQuestion);
-                            }
-                        }
-                    } else {
+                    if (this.currentQuestion.type === 'judgment') {
                         if (!this.selectedAnswer) return;
                         
                         this.showAnswer = true;
@@ -1023,16 +1076,60 @@
                             selectedAnswer: this.selectedAnswer
                         };
                         
-                        if (this.isCorrect) {
+                        const isCorrect = (this.selectedAnswer === 'T') === this.currentQuestion.answer;
+                        if (isCorrect) {
                             this.score++;
                         } else {
                             const wrongQuestion = {
                                 ...this.currentQuestion,
-                                userAnswer: this.selectedAnswer
+                                userAnswer: this.selectedAnswer === 'T' ? '正确' : '错误',
+                                answer: this.currentQuestion.answer ? '正确' : '错误'
                             };
                             const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
                             if (!exists) {
                                 this.wrongQuestions.push(wrongQuestion);
+                            }
+                        }
+                    } else {
+                        if (this.currentQuestion.type === 'blank') {
+                            this.showAnswer = true;
+                            this.answeredQuestions[this.currentIndex] = {
+                                answered: true,
+                                blankAnswers: [...this.blankAnswers]
+                            };
+                            
+                            if (this.checkBlankAnswers()) {
+                                this.score++;
+                            } else {
+                                const wrongQuestion = {
+                                    ...this.currentQuestion,
+                                    userAnswers: [...this.blankAnswers]
+                                };
+                                const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                                if (!exists) {
+                                    this.wrongQuestions.push(wrongQuestion);
+                                }
+                            }
+                        } else {
+                            if (!this.selectedAnswer) return;
+                            
+                            this.showAnswer = true;
+                            this.answeredQuestions[this.currentIndex] = {
+                                answered: true,
+                                selectedAnswer: this.selectedAnswer
+                            };
+                            
+                            if (this.isCorrect) {
+                                this.score++;
+                            } else {
+                                const wrongQuestion = {
+                                    ...this.currentQuestion,
+                                    userAnswer: this.selectedAnswer
+                                };
+                                const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                                if (!exists) {
+                                    this.wrongQuestions.push(wrongQuestion);
+                                }
                             }
                         }
                     }
@@ -1057,6 +1154,7 @@
                                 this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
                             }
                         }
+                        this.scrollToCurrentQuestion();
                     }
                 },
                 previousQuestion() {
@@ -1152,6 +1250,25 @@
                 confirmGoHome() {
                     this.showModal = false;
                     window.location.href = 'index.html';
+                },
+                handleJudgmentClick(isTrue) {
+                    if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
+                        this.selectedAnswer = isTrue ? 'T' : 'F';
+                        if (this.isMobile()) {
+                            this.checkAnswerAndNext();
+                        }
+                    }
+                },
+                scrollToCurrentQuestion() {
+                    this.$nextTick(() => {
+                        const currentQuestionRef = this.$refs.currentQuestion;
+                        if (currentQuestionRef && currentQuestionRef[0]) {
+                            currentQuestionRef[0].scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'nearest'
+                            });
+                        }
+                    });
                 }
             },
             created() {

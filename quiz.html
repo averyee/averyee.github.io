@@ -120,9 +120,32 @@
         }
         .stats {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            font-size: 1.1em;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196f3;
+            min-width: 40px;
+            text-align: center;
+        }
+        .error-count {
+            color: #f44336;
         }
         .wrong-questions {
             margin-top: 20px;
@@ -476,6 +499,24 @@
                 width: 100%;
             }
         }
+
+        .explanation-pdf {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffa000;
+        }
+        
+        .explanation-pdf h4 {
+            margin: 0 0 5px 0;
+            color: #f57c00;
+        }
+        
+        .explanation-pdf p {
+            margin: 0;
+            line-height: 1.5;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -501,8 +542,18 @@
             <div v-if="!isReviewMode" class="quiz-layout">
                 <div class="quiz-main">
                     <div class="stats">
-                        <div>问题 {{ currentIndex + 1 }} / {{ questions.length }}</div>
-                        <div>得分: {{ score }} | 错题数: {{ wrongQuestions.length }}</div>
+                        <div class="stat-item">
+                            <span class="stat-label">进度:</span>
+                            <span class="stat-value">{{ currentIndex + 1 }} / {{ questions.length }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">得分:</span>
+                            <span class="stat-value">{{ score }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">错题:</span>
+                            <span class="stat-value error-count">{{ wrongQuestions.length }}</span>
+                        </div>
                     </div>
 
                     <div class="progress-bar">
@@ -642,6 +693,10 @@
                     <div class="feedback incorrect">
                         你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}
                     </div>
+                    <div class="explanation">
+                        <h4>题目解析：</h4>
+                        <p>{{ question.explanation }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -659,6 +714,10 @@
                     {{ letters[optIndex] }}. {{ option }}
                 </div>
                 <p><strong>你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}</strong></p>
+                <div class="explanation-pdf">
+                    <h4>题目解析：</h4>
+                    <p>{{ question.explanation }}</p>
+                </div>
             </div>
         </div>
     </div>

@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>数据库选择题 - 带错题记录</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #f5f5f5;
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .question-card {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        .options {
+            margin: 20px 0;
+        }
+        .option {
+            margin: 10px 0;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option:hover {
+            background-color: #f5f5f5;
+        }
+        .option.selected {
+            border-color: #2196f3;
+            background-color: #e3f2fd;
+        }
+        .option.correct {
+            border-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+        .option.incorrect {
+            border-color: #ff0000;
+            background-color: #ffebee;
+        }
+        .option.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.3s ease-out;
+        }
+        button:active::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        button:disabled {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .export-button {
+            background-color: #4caf50;
+        }
+        .export-button:hover {
+            background-color: #388e3c;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        .wrong-questions {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff3e0;
+            border-radius: 8px;
+            display: none;
+        }
+        .wrong-questions.show {
+            display: block;
+        }
+        .wrong-question-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-left: 3px solid #ff9800;
+            background-color: #fff;
+        }
+        .review-mode {
+            background-color: #fff3e0;
+        }
+        .mode-switch {
+            margin-bottom: 8px;
+            text-align: right;
+        }
+        /* PDF导出用的隐藏内容 */
+        .pdf-content {
+            display: none;
+            font-family: 'SimSun', serif;
+        }
+        .pdf-content.show {
+            display: block;
+        }
+        .wrong-question-pdf {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .option-pdf {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .correct-answer {
+            color: #4caf50;
+        }
+        .wrong-answer {
+            color: #f44336;
+        }
+        .quiz-layout {
+            display: flex;
+            gap: 20px;
+        }
+        .quiz-main {
+            flex: 1;
+        }
+        .quiz-sidebar {
+            width: 400px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .question-section {
+            margin-bottom: 20px;
+        }
+        .question-section h4 {
+            margin: 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #2196f3;
+            color: #1976d2;
+        }
+        .question-list {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .question-item {
+            padding: 8px 4px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            position: relative;
+            overflow: hidden;
+        }
+        .question-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .question-item:active {
+            transform: translateY(0);
+            background-color: #e3f2fd;
+        }
+        .question-item::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.3s ease-out;
+        }
+        .question-item:active::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .question-item.answered {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .question-item.incorrect {
+            background-color: #ffebee;
+            border-color: #f44336;
+        }
+        .question-item.current {
+            border-width: 2px;
+            border-color: #2196f3;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(33, 150, 243, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+            }
+        }
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffa000;
+            border-radius: 4px;
+        }
+        
+        .explanation h4 {
+            margin: 0 0 10px 0;
+            color: #f57c00;
+        }
+        
+        .explanation p {
+            margin: 0;
+            line-height: 1.5;
+            color: #333;
+        }
+        .option.previous-wrong {
+            border-color: #ff0000;
+            background-color: #fff3e0;
+        }
+        
+        .feedback div {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ff9800;
+        }
+        .blanks {
+            margin: 20px 0;
+        }
+        
+        .blank-item {
+            margin: 10px 0;
+        }
+        
+        .blank-item input {
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 200px;
+        }
+        
+        .blank-item input.correct {
+            border-color: #4caf50;
+            background-color: #e8f5e9;
+        }
+        
+        .blank-item input.incorrect {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+        
+        .correct-answer {
+            margin-left: 10px;
+            color: #4caf50;
+        }
+        .question-section:nth-child(2) .question-item {
+            background-color: #e3f2fd;
+        }
+        .question-section:nth-child(3) .question-item {
+            background-color: #f3e5f5;
+        }
+        .question-section:nth-child(3) .question-item.answered {
+            background-color: #ce93d8;
+            border-color: #9c27b0;
+        }
+        .question-section:nth-child(3) .question-item.incorrect {
+            background-color: #ffcdd2;
+            border-color: #f44336;
+        }
+        .question-section:nth-child(3) .question-item.current {
+            border-color: #9c27b0;
+            animation: pulse-purple 2s infinite;
+        }
+        @keyframes pulse-purple {
+            0% {
+                box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(156, 39, 176, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(156, 39, 176, 0);
+            }
+        }
+        @media screen and (max-width: 1024px) {
+            body {
+                padding: 10px;
+                max-width: 100%;
+            }
+
+            .quiz-layout {
+                flex-direction: column;
+            }
+
+            .quiz-sidebar {
+                width: 100%;
+                margin-top: 20px;
+                order: -1;
+            }
+
+            .question-list {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            button {
+                width: 100%;
+                margin: 0;
+                padding: 15px;
+                font-size: 18px;
+            }
+
+            .option {
+                padding: 15px;
+                margin: 15px 0;
+            }
+
+            .blank-item input {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .question-list {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .mode-switch {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .mode-switch button {
+                width: 100%;
+            }
+        }
+
+        @media (hover: none) {
+            .option:hover {
+                background-color: transparent;
+            }
+
+            .question-item:hover {
+                transform: none;
+            }
+
+            .option:active {
+                background-color: #f5f5f5;
+            }
+
+            .question-item:active {
+                background-color: #e3f2fd;
+            }
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .quiz-container {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media screen and (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            .option {
+                font-size: 16px;
+            }
+
+            .feedback {
+                font-size: 16px;
+            }
+
+            .explanation {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="quiz-container" v-if="!isGeneratingPDF">
+            <h1>数据库选择题</h1>
+            
+            <div class="mode-switch">
+                <button @click="toggleMode" :class="{ 'export-button': !isReviewMode }">
+                    {{ isReviewMode ? '返回答题' : '查看错题' }}
+                </button>
+                <button v-if="wrongQuestions.length > 0" 
+                        @click="generatePDF" 
+                        class="export-button">
+                    导出错题PDF
+                </button>
+            </div>
+
+            <!-- 答题模式 -->
+            <div v-if="!isReviewMode" class="quiz-layout">
+                <div class="quiz-main">
+                    <div class="stats">
+                        <div>问题 {{ currentIndex + 1 }} / {{ questions.length }}</div>
+                        <div>得分: {{ score }} | 错题数: {{ wrongQuestions.length }}</div>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress" :style="{ width: progress + '%' }"></div>
+                    </div>
+
+                    <transition name="fade" mode="out-in">
+                        <div class="question-card" :key="currentIndex">
+                            <h2>{{ currentQuestion.question }}</h2>
+                            
+                            <!-- 选择题显示 -->
+                            <div v-if="currentQuestion.type !== 'blank'" class="options">
+                                <div v-for="(option, index) in currentQuestion.options" 
+                                     :key="index"
+                                     class="option"
+                                     :class="{
+                                         'selected': selectedAnswer === letters[index],
+                                         'correct': showAnswer && letters[index] === currentQuestion.answer,
+                                         'incorrect': showAnswer && selectedAnswer === letters[index] && selectedAnswer !== currentQuestion.answer,
+                                         'previous-wrong': showAnswer && getPreviousAnswer(currentIndex) === letters[index] && letters[index] !== currentQuestion.answer,
+                                         'disabled': isQuestionAnswered(currentIndex)
+                                     }"
+                                     @click="handleOptionClick(letters[index])">
+                                    {{ letters[index] }}. {{ option }}
+                                </div>
+                            </div>
+                            
+                            <!-- 填空题显示 -->
+                            <div v-else class="blanks">
+                                <div v-for="(blank, index) in currentQuestion.blanks" 
+                                     :key="index" 
+                                     class="blank-item">
+                                    <input type="text" 
+                                           v-model="blankAnswers[index]"
+                                           :disabled="showAnswer"
+                                           :class="{ 
+                                               'correct': showAnswer && isBlankCorrect(index),
+                                               'incorrect': showAnswer && !isBlankCorrect(index)
+                                           }"
+                                           @keyup.enter="checkAnswerAndNext">
+                                    <span v-if="showAnswer" class="correct-answer">
+                                        正确答案: {{ blank }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 解析显示 -->
+                            <div v-if="showAnswer" class="explanation">
+                                <h4>题目解析：</h4>
+                                <p>{{ currentQuestion.explanation }}</p>
+                            </div>
+                        </div>
+                    </transition>
+
+                    <div class="button-container">
+                        <button @click="previousQuestion">
+                            上一题
+                        </button>
+                        <button v-if="!showAnswer && currentIndex === questions.length - 1" 
+                                @click="checkAnswer" 
+                                :disabled="!canSubmit">
+                            提交答案
+                        </button>
+                        <button v-else-if="!showAnswer"
+                                @click="checkAnswerAndNext"
+                                :disabled="!canSubmit">
+                            下一题
+                        </button>
+                        <button v-else @click="nextQuestion" :disabled="currentIndex === questions.length - 1">
+                            下一题
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 题目目录侧边栏 -->
+                <div class="quiz-sidebar">
+                    <h3>题目导航</h3>
+                    
+                    <!-- 选择题导航 -->
+                    <div class="question-section">
+                        <h4>选择题</h4>
+                        <div class="question-list">
+                            <div v-for="(question, index) in questions"
+                                 v-if="question.type !== 'blank'"
+                                 :key="index"
+                                 class="question-item"
+                                 :class="{
+                                     'answered': answeredQuestions[index],
+                                     'incorrect': isQuestionWrong(index),
+                                     'current': currentIndex === index
+                                 }"
+                                 @click="goToQuestion(index)">
+                                {{ index + 1 }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 填空题导航 -->
+                    <div class="question-section">
+                        <h4>填空题</h4>
+                        <div class="question-list">
+                            <div v-for="(question, index) in questions"
+                                 v-if="question.type === 'blank'"
+                                 :key="index"
+                                 class="question-item"
+                                 :class="{
+                                     'answered': answeredQuestions[index],
+                                     'incorrect': isQuestionWrong(index),
+                                     'current': currentIndex === index
+                                 }"
+                                 @click="goToQuestion(index)">
+                                {{ index + 1 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 错题复习模式 -->
+            <div v-else class="wrong-questions show">
+                <h2>错题记录 (共 {{ wrongQuestions.length }} 题)</h2>
+                <div v-for="(question, index) in wrongQuestions" 
+                     :key="index" 
+                     class="wrong-question-item">
+                    <h3>{{ index + 1 }}. {{ question.question }}</h3>
+                    <div class="options">
+                        <div v-for="(option, optIndex) in question.options" 
+                             :key="optIndex"
+                             class="option"
+                             :class="{
+                                 'correct': letters[optIndex] === question.answer,
+                                 'incorrect': letters[optIndex] === question.userAnswer
+                             }">
+                            {{ letters[optIndex] }}. {{ option }}
+                        </div>
+                    </div>
+                    <div class="feedback incorrect">
+                        你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF导出用的隐藏内容 -->
+        <div id="pdf-content" class="pdf-content" :class="{ show: isGeneratingPDF }">
+            <h1 style="text-align: center;">数据库选择题 - 错题记录</h1>
+            <div v-for="(question, index) in wrongQuestions" :key="index" class="wrong-question-pdf">
+                <h3>{{ index + 1 }}. {{ question.question }}</h3>
+                <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-pdf"
+                     :class="{
+                         'correct-answer': letters[optIndex] === question.answer,
+                         'wrong-answer': letters[optIndex] === question.userAnswer && letters[optIndex] !== question.answer
+                     }">
+                    {{ letters[optIndex] }}. {{ option }}
+                </div>
+                <p><strong>你的答案: {{ question.userAnswer }} | 正确答案: {{ question.answer }}</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                "questions": [
+                    {
+                    "id": 1,
+                    "question": "关系数据库中能唯一标识元组的属性称为（ ）。",
+                    "options": ["分量", "唯一性的属性", "关系的唯性", "关健字"],
+                    "answer": "D",
+                    "explanation": "在关系数据库中，能唯一标识元组的属性称为“关健字”（即主键）。"
+                    },
+                    {
+                    "id": 2,
+                    "question": "一个关系逻辑上对应一张（ ）。",
+                    "options": ["三维图", "三维表", "二维表", "树形图"],
+                    "answer": "C",
+                    "explanation": "关系数据库中的关系逻辑上对应一张二维表，由行和列组成。"
+                    },
+                    {
+                    "id": 3,
+                    "question": "在关系代数的专门关系运算中，从表中选出满足某种条件的元组的操作称为（ ）。",
+                    "options": ["选择", "连接", "投影", "扫描"],
+                    "answer": "A",
+                    "explanation": "“选择”操作是从表中选出满足某种条件的元组。"
+                    },
+                    {
+                    "id": 4,
+                    "question": "关于关系中的元组的描述正确的是（ ）。",
+                    "options": [
+                        "元组的先后顺序颠倒后，会影响数据库中数据之间的关系",
+                        "元组的先后顺序可以颠倒，但是不能出现重复元组",
+                        "元组的先后顺序不能任意颠倒，一定要按照输入的顺序排列",
+                        "元组的先后顺序不能任意颠倒，一定要按照主码顺序排列"
+                    ],
+                    "answer": "B",
+                    "explanation": "关系中的元组是无序的，顺序可以颠倒，但不能出现重复元组。"
+                    },
+                    {
+                    "id": 5,
+                    "question": "随着计算机技术的发展及应用，数据管理技术经历的阶段按照时间顺序分别是（ ）。",
+                    "options": [
+                        "文件系统阶段、人工管理阶段、大数据阶段",
+                        "人工管理阶段、文件系统阶段、数据库系统阶段",
+                        "数据库系统阶段、文件系统阶段、大数据阶段",
+                        "人工管理阶段、数据阶段、文件系统阶段"
+                    ],
+                    "answer": "B",
+                    "explanation": "数据管理技术的发展顺序是：人工管理阶段 → 文件系统阶段 → 数据库系统阶段。"
+                    },
+                    {
+                    "id": 6,
+                    "question": "在数据管理技术的发展过程中，经历了人工管理阶段、文件系统阶段和数据库系统阶段。在这几个阶段中，数据独立性最高的阶段是（ ）。",
+                    "options": ["文件系统阶段", "数据项管理阶段", "人工管理阶段", "数据库系统阶段"],
+                    "answer": "D",
+                    "explanation": "数据库系统阶段提供了最高的数据独立性，包括逻辑独立性和物理独立性。"
+                    },
+                    {
+                    "id": 7,
+                    "question": "关系代数的4个组合操作是（ ）。",
+                    "options": [
+                        "投影、自然连接、选取、连接",
+                        "交、连接、自然连接、除法",
+                        "投影、白然连接、选取、除法",
+                        "投影、连接、选取、除法"
+                    ],
+                    "answer": "B",
+                    "explanation": "关系代数的4个组合操作是：交、连接、自然连接、除法。"
+                    },
+                    {
+                    "id": 8,
+                    "question": "不属于数据库设计方法的是（ ）。",
+                    "options": ["直观设计法", "客观设计法", "计算机辅助设计法", "规范设计法"],
+                    "answer": "B",
+                    "explanation": "“客观设计法”不是数据库设计的常用方法。"
+                    },
+                    {
+                    "id": 9,
+                    "question": "在层次模型、网状模型中，起导航数据作用的是（ ）。",
+                    "options": ["指针", "索引", "DD", "关键码"],
+                    "answer": "A",
+                    "explanation": "在层次模型和网状模型中，指针用于导航数据。"
+                    },
+                    {
+                    "id": 10,
+                    "question": "在关系模型中，候选码（ ）。",
+                    "options": [
+                        "可由一个或多个其值能唯一标识该关系模式中任何元组的属性组成",
+                        "至多由一个属性组成",
+                        "可由多个任意属性组成",
+                        "以上都不是"
+                    ],
+                    "answer": "A",
+                    "explanation": "候选码可以由一个或多个属性组成，只要这些属性能唯一标识元组。"
+                    },
+                    {
+                    "id": 11,
+                    "question": "使用存储过程有很多好处，其中不包括（ ）。",
+                    "options": ["可简化查询语句", "良好的封装性", "可增强SQL语言功能和灵活性", "可减少网络流量"],
+                    "answer": "A",
+                    "explanation": "存储过程的主要好处不包括简化查询语句，而是封装性、功能增强和减少网络流量。"
+                    },
+                    {
+                    "id": 12,
+                    "question": "关系代数的5个基本操作是（ ）。",
+                    "options": [
+                        "并、差、选取、笛卡儿积、投影",
+                        "并、交、笛卡儿积、选取、除法",
+                        "并、交、差、笛卡儿积、除法",
+                        "并、交、选取、投影、除法"
+                    ],
+                    "answer": "A",
+                    "explanation": "关系代数的5个基本操作是：并、差、选取、笛卡儿积、投影。"
+                    },
+                    {
+                    "id": 13,
+                    "question": "在SQL语句中，用于过滤分组的子句是（ ）。",
+                    "options": ["HAVING", "GROUP", "ORDER", "LIMIT"],
+                    "answer": "A",
+                    "explanation": "HAVING子句用于过滤分组后的结果。"
+                    },
+                    {
+                    "id": 14,
+                    "question": "（ ）属于信息世界的模型，实际上是现实世界到机器世界的一个中间层次。",
+                    "options": ["关系模型", "ER图", "概念模型", "数据模型"],
+                    "answer": "C",
+                    "explanation": "概念模型是信息世界的模型，用于描述现实世界到机器世界的中间层次。"
+                    },
+                    {
+                    "id": 15,
+                    "question": "数据库管理系统的英文缩写是（ ）。",
+                    "options": ["DATA", "DBS", "DBMS", "DB"],
+                    "answer": "C",
+                    "explanation": "数据库管理系统的英文缩写是DBMS（Database Management System）。"
+                    },
+                    {
+                    "id": 16,
+                    "question": "在关系数据库中，关系模式是（ ）。",
+                    "options": ["动态的", "值", "随时间不断变化的", "型"],
+                    "answer": "D",
+                    "explanation": "关系模式是关系的结构，属于“型”，而不是具体的值。"
+                    },
+                    {
+                    "id": 17,
+                    "question": "关系模型中有三类完整性约束，分别是实体完整性、参照完整性和（ ）。",
+                    "options": ["外码完整性", "级联完整性", "主码完整性", "用户定义完整性"],
+                    "answer": "D",
+                    "explanation": "关系模型中的三类完整性约束是：实体完整性、参照完整性和用户定义完整性。"
+                    },
+                    {
+                    "id": 18,
+                    "question": "4元关系R为R(A, B, C, D)，则（ ）。",
+                    "options": [
+                        "πA,C(R)为取属性值为A、C的两列组成",
+                        "πA,C(R)与π1,3(R)是等价的",
+                        "πA,C(R)与π1,3(R)是不等价的",
+                        "π1,3(R)为取属性值为1、3的两列组成"
+                    ],
+                    "answer": "B",
+                    "explanation": "πA,C(R)与π1,3(R)是等价的，都表示选择属性A和C。"
+                    },
+                    {
+                    "id": 19,
+                    "question": "现实世界中事物的一般特性在信息世界中称为（ ）。",
+                    "options": ["属性", "实体", "关系键", "实体键"],
+                    "answer": "A",
+                    "explanation": "现实世界中事物的一般特性在信息世界中称为“属性”。"
+                    },
+                    {
+                    "id": 20,
+                    "question": "不好的关系模式可能引起很多问题，其中不包括（ ）。",
+                    "options": ["丢失更新", "数据冗余", "删除异常", "插入异常"],
+                    "answer": "A",
+                    "explanation": "“丢失更新”通常是由并发控制问题引起的，而不是关系模式设计问题。"
+                    },
+                    {
+                    "id": 21,
+                    "question": "建立索引的数据对象通常应具有较多的操作是（ ）。",
+                    "options": ["修改", "删除", "插入", "查询"],
+                    "answer": "D",
+                    "explanation": "索引通常用于加速查询操作，而不是修改、删除或插入。"
+                    },
+                    {
+                    "id": 22,
+                    "question": "要控制两个表中数据的完整性和一致性可以设置“参照完整性”，要求这两个表是（ ）。",
+                    "options": [
+                        "不同数据库中的两个表",
+                        "不同系统数据库中的两个表",
+                        "两个任意表",
+                        "同一个数据库中的两个表"
+                    ],
+                    "answer": "D",
+                    "explanation": "参照完整性要求两个表在同一个数据库中。"
+                    },
+                    {
+                    "id": 23,
+                    "question": "DBMS对数据库中数据进行查询、插人、修改和删除操作的功能称为（ ）。",
+                    "options": ["数据定义功能", "数据管理功能", "数据控制功能", "数据操纵功能"],
+                    "answer": "D",
+                    "explanation": "DBMS的查询、插入、修改和删除操作属于数据操纵功能。"
+                    },
+                    {
+                    "id": 24,
+                    "question": "在数据库系统中,同一个外模式（ ）。",
+                    "options": [
+                        "可以被同一个用户的多个应用程序使用",
+                        "不能被一个用户的多个应用程序使用",
+                        "可以被所有用户的应用程序使用",
+                        "只能被一个用户的一个应用程序使用"
+                    ],
+                    "answer": "A",
+                    "explanation": "同一个外模式可以被同一个用户的多个应用程序使用。"
+                    },
+                    {
+                    "id": 25,
+                    "question": "在关系数据库系统中，当关系的类型改变时，用户程序也可以不变，这是（ ）。",
+                    "options": ["数据的存储独立性", "数据的物理独立性", "数据的逻辑独立性", "数据的位置独立性"],
+                    "answer": "C",
+                    "explanation": "当关系的类型改变时，用户程序不变，这是数据的逻辑独立性。"
+                    },
+                    {
+                    "id": 26,
+                    "question": "下列关于游标说法错误的是（ ）。",
+                    "options": [
+                        "使用CLOSE语句关闭游标",
+                        "使用游标前必须先声明（定义）它",
+                        "游标多次使用需要多次声明",
+                        "每个游标不再需要时都应该被关闭"
+                    ],
+                    "answer": "C",
+                    "explanation": "游标多次使用时不需要多次声明，只需声明一次即可。"
+                    },
+                    {
+                    "id": 27,
+                    "question": "数据库（DB），数据库系统（DBS)和数据库管理系统（DBMS）三者之间关系是（ ）。",
+                    "options": [
+                        "DBS就是DB，也就是DBMS",
+                        "DBS包括DB和DBMS",
+                        "DB包括DBS和DBMS",
+                        "DBMS包括DB和DBS"
+                    ],
+                    "answer": "B",
+                    "explanation": "数据库系统（DBS）包括数据库（DB）和数据库管理系统（DBMS）。"
+                    },
+                    {
+                    "id": 28,
+                    "question": "设关系R与关系S具有相同的目，且相对应的属性取自同一个域，则R - (R - S)等价于（ ）。",
+                    "options": ["R∩S", "RXS", "R-S", "RUS"],
+                    "answer": "A",
+                    "explanation": "R - (R - S)等价于R∩S，即R和S的交集。"
+                    },
+                    {
+                    "id": 29,
+                    "question": "可用于将数据插入到表或视图中的SQL语句是（ ）。",
+                    "options": ["INNER", "INSERT", "IN", "ALTER"],
+                    "answer": "B",
+                    "explanation": "INSERT语句用于将数据插入到表或视图中。"
+                    },
+                    {
+                    "id": 30,
+                    "question": "下列4项中，不属于数据库特点的是（ ）。",
+                    "options": ["数据完整性", "数据独立性高", "数据共享", "数据冗余很高"],
+                    "answer": "D",
+                    "explanation": "数据库的特点不包括“数据冗余很高”，而是尽量减少冗余。"
+                    },
+                    {
+                    "id": 31,
+                    "question": "在基本的关系中，下列说法正确的是（ ）。",
+                    "options": ["行列顺序有关", "列是非同质的", "属性名允许重名", "任意两个元组不允许重复"],
+                    "answer": "D",
+                    "explanation": "在基本的关系中，任意两个元组不允许重复。"
+                    },
+                    {
+                    "id": 32,
+                    "question": "在关系R(R#, RN, S#)和S(S#, SN, SD)中，R的主键是R#，S的主键是S#，则S#在R中称为（ ）。",
+                    "options": ["主键", "全键", "外键", "候选键"],
+                    "answer": "C",
+                    "explanation": "S#在R中称为外键，因为它引用了另一个表的主键。"
+                    },
+                    {
+                    "id": 33,
+                    "question": "SQL语言的GRANT和REVOKE语句主要是用来维护数据库的（ ）。",
+                    "options": ["安全性", "完整性", "可靠性", "一致性"],
+                    "answer": "A",
+                    "explanation": "GRANT和REVOKE语句用于维护数据库的安全性。"
+                    },
+                    {
+                    "id": 34,
+                    "question": "表中每个字段表示同一类信息，具有相同的（ ）。",
+                    "options": ["分量", "数据类型", "数据模型", "元组"],
+                    "answer": "B",
+                    "explanation": "表中每个字段表示同一类信息，具有相同的数据类型。"
+                    },
+                    {
+                    "id": 35,
+                    "question": "关于函数过程说法错误的是（ ）。",
+                    "options": [
+                        "可以不包含RETURN语句",
+                        "不需要使用EXEC语句调用",
+                        "不能拥有输出参数",
+                        "由SQL语句和过程式语句所组成"
+                    ],
+                    "answer": "C",
+                    "explanation": "函数过程可以拥有输出参数，因此选项C错误。"
+                    },
+                    {
+                    "id": 36,
+                    "question": "SQL.Server2005有4个系统数据库，下列不是系统数据库的为（ ）。",
+                    "options": ["master", "msdb", "model", "pubs"],
+                    "answer": "D",
+                    "explanation": "pubs不是SQL Server 2005的系统数据库。"
+                    },
+                    {
+                    "id": 37,
+                    "question": "有一个关系：学生(学号，姓名，系别)，规定“学号”属性取值是8个数字组成的字符串，这一规则属于（ ）。",
+                    "options": ["关键字完整性约束", "参照完整性约束", "实体完整性约束", "用户定义完整性约束"],
+                    "answer": "D",
+                    "explanation": "“学号”属性的取值规则属于用户定义完整性约束。"
+                    },
+                    {
+                    "id": 38,
+                    "question": "下列SQL语句中不属于数据定义语言的是（ ）。",
+                    "options": ["ALTER", "INSERT", "DROP", "CREATE"],
+                    "answer": "B",
+                    "explanation": "INSERT语句属于数据操纵语言（DML），而不是数据定义语言（DDL）。"
+                    },
+                    {
+                    "id": 39,
+                    "question": "层次模型不能直接表示（ ）。",
+                    "options": ["1:m关系", "1:1关系", "m:n关系", "1:1和1:m关系"],
+                    "answer": "C",
+                    "explanation": "层次模型不能直接表示多对多（m:n）关系。"
+                    },
+                    {
+                    "id": 40,
+                    "question": "在关系模型中，表中的一行称为一个（ ）。",
+                    "options": ["元组", "主码", "属性", "主键"],
+                    "answer": "A",
+                    "explanation": "在关系模型中，表中的一行称为一个元组。"
+                    },
+                    {
+                    "id": 41,
+                    "question": "用二维表结构表示实体以及实体间联系的数据模型为（ ）。",
+                    "options": ["关系模型", "层次模型", "面向对象模型", "网状模型"],
+                    "answer": "A",
+                    "explanation": "关系模型使用二维表结构表示实体及实体间联系。"
+                    },
+                    {
+                    "id": 42,
+                    "question": "将触发器从数据库中删除的语句是（ ）。",
+                    "options": ["DROP TRIGGER", "DELETE TRIGGER", "CREATE TRIGGER", "GRANT TRIGGER"],
+                    "answer": "A",
+                    "explanation": "DROP TRIGGER语句用于将触发器从数据库中删除。"
+                    },
+                    {
+                    "id": 43,
+                    "question": "由数据结构、关系操作和数据完整性三部分组成的是（ ）。",
+                    "options": ["对象模型", "关系模型", "层次模型", "网状模型"],
+                    "answer": "B",
+                    "explanation": "关系模型由数据结构、关系操作和数据完整性三部分组成。"
+                    },
+                    {
+                    "id": 44,
+                    "question": "非关系模型中数据结构的基本单位是（ ）。",
+                    "options": ["两个记录型间的联系", "记录", "实体间多对多的联系", "基本层次联系"],
+                    "answer": "D",
+                    "explanation": "非关系模型中数据结构的基本单位是基本层次联系。"
+                    },
+                    {
+                    "id": 45,
+                    "question": "对关系模型叙述错误的是（ ）。",
+                    "options": [
+                        "不具有连接操作的DBMS也可以是关系数据库系统",
+                        "微机DBMS绝大部分采取关系数据模型",
+                        "用二维表表示关系模型是其一大特点",
+                        "建立在严格的数学理论、集合论和谓词演算公式的基础之上"
+                    ],
+                    "answer": "A",
+                    "explanation": "关系数据库系统必须支持连接操作，因此选项A错误。"
+                    },
+                    {
+                    "id": 46,
+                    "question": "自然连接是一种特殊的等值连接。一般情况下，当对关系R和S使用自然连接时，要求R和S含有一个或多个共有的（ ）。",
+                    "options": ["记录", "元组", "属性", "行"],
+                    "answer": "C",
+                    "explanation": "自然连接要求R和S含有一个或多个共有的属性。"
+                    },
+                    {
+                    "id": 47,
+                    "question": "以下不属于数据库中存储数据的特点是（ ）。",
+                    "options": ["永久存储", "集中管理", "有组织", "可共享"],
+                    "answer": "B",
+                    "explanation": "B集中管理 是指数据由单一的数据库管理系统（DBMS）统一管理，但这并不是数据库存储数据的特点，而是数据库管理系统的一种功能。"
+                    },
+                    {
+                    "id": 48,
+                    "question": "需求分析报告完成的内容不包括（ ）。",
+                    "options": ["数据约束", "编写代码", "数据字典", "数据库的应用功能目标"],
+                    "answer": "B",
+                    "explanation": "需求分析报告不包括编写代码，这是实现阶段的任务。"
+                    },
+                    {
+                    "id": 49,
+                    "question": "下列不是数据库中SQL命令语句的是（ ）。",
+                    "options": ["DDL", "DCL", "DML", "DBA"],
+                    "answer": "D",
+                    "explanation": "DBA（数据库管理员）不是SQL命令语句。"
+                    },
+                    {
+                    "id": 50,
+                    "question": "当关系有多个候选键时，则选定一个作为主键，但若主键为全键时应包含（ ）。",
+                    "options": ["单个属性", "多个属性", "两个属性", "全部属性"],
+                    "answer": "D",
+                    "explanation": "主键为全键时应包含全部属性。"
+                    },
+                    {
+                    "id": 51,
+                    "question": "同一个关系模型的任意两个元组值（ ）。",
+                    "options": ["必须全同", "以上都不是", "不能全同", "可全同"],
+                    "answer": "C",
+                    "explanation": "同一个关系模型的任意两个元组值不能全同，必须唯一。"
+                    },
+                    {
+                    "id": 52,
+                    "question": "数据作的网状模型应满足的条件是（ ）。",
+                    "options": [
+                        "必须有两个以上的结点",
+                        "有且仅有一个结点无双亲.其余结点都只有一个双亲",
+                        "每个结点有且仅有一个双亲",
+                        "允许一个以上的无双亲，也允许-个结点有一个双亲"
+                    ],
+                    "answer": "D",
+                    "explanation": "网状模型允许一个以上的无双亲，也允许一个结点有一个双亲。"
+                    },
+                    {
+                    "id": 53,
+                    "question": "数据定义语言的英文缩写是（ ）。",
+                    "options": ["DDB", "DCL", "DML", "DDL"],
+                    "answer": "D",
+                    "explanation": "数据定义语言的英文缩写是DDL（Data Definition Language）。"
+                    },
+                    {
+                    "id": 54,
+                    "question": "不属于关系完整性约束的是（ ）。",
+                    "options": ["用户定义完整性约束", "实体完整性约束", "参照完整性约束", "关系代数完整性约束"],
+                    "answer": "D",
+                    "explanation": "关系代数完整性约束不是关系模型的完整性约束之一。"
+                    },
+                    {
+                    "id": 55,
+                    "question": "关于触发器的说法不正确的是（ ）。",
+                    "options": [
+                        "使用触发器是保证数据完整性的方法",
+                        "DML触发器支持的事件包括INSERT、DELETE、UPDATE和SELECT",
+                        "触发器一旦定义，任何对表的修改操作都由数据库服务器自动激活相应触发器",
+                        "触发器是用户定义在关系表上的一类由事件驱动的数据库对象"
+                    ],
+                    "answer": "B",
+                    "explanation": "DML触发器不支持SELECT事件，因此选项B错误。"
+                    },
+                    {
+                    "id": 56,
+                    "question": "下列运算中不要求两个关系的属性个数相同的是（ ）。",
+                    "options": ["交", "并", "差", "笛卡尔积"],
+                    "answer": "D",
+                    "explanation": "笛卡尔积不要求两个关系的属性个数相同。"
+                    },
+                    {
+                    "id": 57,
+                    "question": "一个车间只能有一名车间主任，一个职工也只能在一个车间当主任。那么车间和车间主任之间的联系是（ ）。",
+                    "options": ["多对一联系", "一对多联系", "一对一联系", "多对多联系"],
+                    "answer": "C",
+                    "explanation": "车间和车间主任之间的联系是一对一联系。"
+                    },
+                    {
+                    "id": 58,
+                    "question": "在E-R图合并过程中，消除的冲突不包括（ ）。",
+                    "options": ["结构冲突", "命名冲突", "类型冲突", "属性冲突"],
+                    "answer": "D",
+                    "explanation": "E-R图合并过程中消除的冲突不包括属性冲突。"
+                    },
+                    {
+                    "id": 59,
+                    "question": "在数据库中存储的是( )。",
+                    "options": ["数据以及数据之间的联系", "信息", "数据", "数据模型"],
+                    "answer": "A",
+                    "explanation": "数据库中存储的是数据以及数据之间的联系。"
+                    },
+                    {
+                    "id": 60,
+                    "question": "数据库(DB)、数据库系统(DBS)和数据库管理系统(DBMS)之间的关系是（ ）。",
+                    "options": [
+                        "DB包括DBS和DBMS",
+                        "DBS包括DB和DBMS",
+                        "三者属于平级关系",
+                        "DBMS包括DB和DBS"
+                    ],
+                    "answer": "B",
+                    "explanation": "数据库系统（DBS）包括数据库（DB）和数据库管理系统（DBMS）。"
+                    },
+                    {
+                    "id": 61,
+                    "question": "在完成系统的实现工作之后，在正式交付用户使用之前，需要对所开发的系统进行必要的工作是（ ）。",
+                    "options": ["设计", "实现", "分析", "测试"],
+                    "answer": "D",
+                    "explanation": "在系统实现后，正式交付用户之前需要进行测试。"
+                    },
+                    {
+                    "id": 62,
+                    "question": "从指定关系中选取满足给定条件的若干元组组成一个新关系是（ ）。",
+                    "options": ["投影运算", "选择运算", "除运算", "连接运算"],
+                    "answer": "B",
+                    "explanation": "选择运算是从关系中选取满足条件的元组组成新关系。"
+                    },
+                    {
+                        "id": 63,
+                        "type": "blank",
+                        "question": "数据模型的三要素包含____、____和____部分。",
+                        "blanks": ["数据结构", "数据操作", "数据完整性"],
+                        "explanation": "数据模型由数据结构、数据操作和数据完整性三部分组成，这是数据模型的基本要素。"
+                    },
+                    {
+                        "id": 64,
+                        "type": "blank",
+                        "question": "在数据库系统中，将满足以下两个条件的基本层次联系集合称为层次模型：____，____。",
+                        "blanks": ["有且仅有一个结点无双亲", "其他结点有且仅有一个双亲"],
+                        "explanation": "这是层次模型的两个基本特征，确保了数据的层次结构。"
+                    },
+                    {
+                        "id": 65,
+                        "type": "blank",
+                        "question": "一个关系模式的所有属性集合是这个关系的主码或主键，则称这样的主码或主键为____。",
+                        "blanks": ["全码"],
+                        "explanation": "当关系的所有属性都构成主键时，这样的主键称为全码。"
+                    },
+                    {
+                        "id": 66,
+                        "type": "blank",
+                        "question": "从指定关系中选取指定的若干属性值组成一个新关系的运算是____。",
+                        "blanks": ["投影"],
+                        "explanation": "投影运算是从关系中选择指定的属性列，生成一个新的关系。"
+                    },
+                    {
+                        "id": 67,
+                        "type": "blank",
+                        "question": "数据模型通常由数据结构、____和数据约束三个要素组成。",
+                        "blanks": ["数据操作"],
+                        "explanation": "数据模型的三要素是数据结构、数据操作和数据约束。"
+                    },
+                    {
+                        "id": 68,
+                        "type": "blank",
+                        "question": "关系代数的连接运算中当Ѳ为为“=”的连接时称为____,且当比较的分量是相同的属性组时,则称为____。",
+                        "blanks": ["等值连接", "自然连接"],
+                        "explanation": "等值连接是基于相等条件的连接，自然连接是等值连接的一种特殊情况，要求比较的属性组相同。"
+                    },
+                    {
+                        "id": 69,
+                        "type": "blank",
+                        "question": "概念模型是按____的观点对数据建模，强调其语义表达能力。",
+                        "blanks": ["用户"],
+                        "explanation": "概念模型是从用户的角度对数据进行建模，强调语义表达能力。"
+                    },
+                    {
+                        "id": 70,
+                        "type": "blank",
+                        "question": "层次模型和网状模型的数据结构分别是____和____。",
+                        "blanks": ["树", "有向图"],
+                        "explanation": "层次模型的数据结构是树，网状模型的数据结构是有向图。"
+                    },
+                    {
+                        "id": 71,
+                        "type": "blank",
+                        "question": "E-R图提供了用图形表示实体型、属性和联系的方法，用____表示实体型，用____表示属性，用____表示联系。",
+                        "blanks": ["矩形", "椭圆形", "菱形"],
+                        "explanation": "E-R图中，矩形表示实体型，椭圆形表示属性，菱形表示联系。"
+                    },
+                    {
+                        "id": 72,
+                        "type": "blank",
+                        "question": "按照运算符的不同，关系代数的操作可分为传统的集合运算与专门的____运算。",
+                        "blanks": ["关系"],
+                        "explanation": "关系代数的操作分为传统的集合运算和专门的关系运算。"
+                    },
+                    {
+                        "id": 73,
+                        "type": "blank",
+                        "question": "面向对象数据模型中，对象包括一组____、____和____。",
+                        "blanks": ["属性", "消息", "方法"],
+                        "explanation": "面向对象数据模型中，对象由属性、消息和方法组成。"
+                    },
+                    {
+                        "id": 74,
+                        "type": "blank",
+                        "question": "在T-SQL中，可以使用____语句来声明局部变量。",
+                        "blanks": ["DECLARE"],
+                        "explanation": "DECLARE语句用于在T-SQL中声明局部变量。"
+                    },
+                    {
+                        "id": 75,
+                        "type": "blank",
+                        "question": "关系操作有3种不同的描述方式,分别是____、____和____。",
+                        "blanks": ["关系代数", "关系演算", "结构化查询语言/SQL"],
+                        "explanation": "关系操作的描述方式包括关系代数、关系演算和结构化查询语言（SQL）。"
+                    },
+                    {
+                        "id": 76,
+                        "type": "blank",
+                        "question": "在专门关系运算中,从给定的基本表中按照要求取出指定属性的操作称为____,从给定的基本表中选出满足某种条件的元组的操作称为____。",
+                        "blanks": ["投影", "选择"],
+                        "explanation": "投影操作选择指定属性，选择操作筛选满足条件的元组。"
+                    },
+                    {
+                        "id": 77,
+                        "type": "blank",
+                        "question": "关系模式由____、____、____3部分组成。",
+                        "blanks": ["关系的数据结构", "关系操作集合", "关系的完整性约束"],
+                        "explanation": "关系模式由数据结构、操作集合和完整性约束三部分组成。"
+                    },
+                    {
+                        "id": 78,
+                        "type": "blank",
+                        "question": "实体集之间的联系可以分为3个类型，它们是____、____和____。（用汉字描述）",
+                        "blanks": ["一对一联系", "一对多联系", "多对多联系"],
+                        "explanation": "实体集之间的联系类型包括一对一、一对多和多对多联系。"
+                    },
+                    {
+                        "id": 79,
+                        "type": "blank",
+                        "question": "系统维护中，部分修改数据库的逻辑结构或物理结构的工作是____。",
+                        "blanks": ["重新构造和组织"],
+                        "explanation": "重新构造和组织是修改数据库逻辑或物理结构的工作。"
+                    },
+                    {
+                        "id": 80,
+                        "type": "blank",
+                        "question": "活锁问题的解决与调度算法有关，一种最简单的方法是____。",
+                        "blanks": ["采用先来先服务的策略"],
+                        "explanation": "先来先服务策略是解决活锁问题的一种简单方法。"
+                    },
+                    {
+                        "id": 81,
+                        "type": "blank",
+                        "question": "在元组演算中,如果ϕ1和ϕ2是公式,那么ϕ1^ϕ2是公式,____、____也是公式。",
+                        "blanks": ["ϕ1 ν ϕ2", "⌐ ϕ1"],
+                        "explanation": "在元组演算中，ϕ1 ν ϕ2和⌐ ϕ1也是合法的公式。"
+                    },
+                    {
+                        "id": 82,
+                        "type": "blank",
+                        "question": "在数据库的三级模式中，外模式对应到数据库中的概念就是____。",
+                        "blanks": ["视图"],
+                        "explanation": "外模式在数据库中对应视图的概念。"
+                    },
+                    {
+                        "id": 83,
+                        "type": "blank",
+                        "question": "在数据库系统中，____就是并发执行的正确性准则。",
+                        "blanks": ["可串行性"],
+                        "explanation": "可串行性是并发执行的正确性准则。"
+                    },
+                    {
+                        "id": 84,
+                        "type": "blank",
+                        "question": "新奥尔良设计法、基于E-R模型的数据库设计法和基于第____范式的设计方法是常见的规范设计方法。",
+                        "blanks": ["三"],
+                        "explanation": "基于第三范式的设计方法是常见的规范设计方法之一。"
+                    },
+                    {
+                        "id": 85,
+                        "type": "blank",
+                        "question": "关系的完整性分为____、____、____3类。",
+                        "blanks": ["实体完整性", "参考完整性", "用户定义的完整性"],
+                        "explanation": "关系的完整性包括实体完整性、参考完整性和用户定义的完整性。"
+                    },
+                    {
+                        "id": 86,
+                        "type": "blank",
+                        "question": "表示实体和实体之间联系的模型，称为____。",
+                        "blanks": ["E-R模型"],
+                        "explanation": "E-R模型用于表示实体和实体之间的联系。"
+                    },
+                    {
+                        "id": 87,
+                        "type": "blank",
+                        "question": "关系数据库中，二维表称为一个____，表的一行称为____，表的一列称____。",
+                        "blanks": ["关系", "元组", "属性"],
+                        "explanation": "在关系数据库中，二维表称为关系，行称为元组，列称为属性。"
+                    },
+                    {
+                        "id": 88,
+                        "type": "blank",
+                        "question": "关系代数运算中____、____、____、____和____是5个基本运算,其他运算可以从基木的运算中导出。",
+                        "blanks": ["并", "差", "笛卡尔积", "投影", "选择"],
+                        "explanation": "关系代数的5个基本运算是并、差、笛卡尔积、投影和选择。"
+                    }
+                ],
+                currentIndex: 0,
+                selectedAnswer: '',
+                showAnswer: false,
+                score: 0,
+                letters: ['A', 'B', 'C', 'D'],
+                wrongQuestions: [],
+                isReviewMode: false,
+                isGeneratingPDF: false,
+                answeredQuestions: {},
+                blankAnswers: []
+            },
+            computed: {
+                currentQuestion() {
+                    return this.questions[this.currentIndex];
+                },
+                progress() {
+                    return ((this.currentIndex + 1) / this.questions.length) * 100;
+                },
+                isCorrect() {
+                    return this.selectedAnswer === this.currentQuestion.answer;
+                },
+                canSubmit() {
+                    if (this.currentQuestion.type === 'blank') {
+                        return this.currentQuestion.blanks.every((_, index) => 
+                            this.blankAnswers[index] && this.blankAnswers[index].trim() !== ''
+                        );
+                    } else {
+                        return !!this.selectedAnswer;
+                    }
+                }
+            },
+            methods: {
+                handleOptionClick(letter) {
+                    if (!this.showAnswer && !this.isQuestionAnswered(this.currentIndex)) {
+                        this.selectedAnswer = letter;
+                        if (this.isMobile()) {
+                            this.checkAnswerAndNext();
+                        }
+                    }
+                },
+                isQuestionAnswered(index) {
+                    return this.answeredQuestions[index]?.answered === true;
+                },
+                isQuestionWrong(index) {
+                    return this.wrongQuestions.some(q => q.id === this.questions[index].id);
+                },
+                goToQuestion(index) {
+                    this.currentIndex = index;
+                    this.showAnswer = this.isQuestionAnswered(index);
+                    this.resetAnswers();
+                    if (this.showAnswer) {
+                        if (this.currentQuestion.type === 'blank') {
+                            this.blankAnswers = [...this.answeredQuestions[index].blankAnswers];
+                        } else {
+                            this.selectedAnswer = this.answeredQuestions[index].selectedAnswer;
+                        }
+                    }
+                },
+                resetAnswers() {
+                    this.selectedAnswer = '';
+                    this.blankAnswers = Array(this.currentQuestion.type === 'blank' ? 
+                        this.currentQuestion.blanks.length : 0).fill('');
+                },
+                checkAnswer() {
+                    if (this.currentQuestion.type === 'blank') {
+                        this.showAnswer = true;
+                        this.answeredQuestions[this.currentIndex] = {
+                            answered: true,
+                            blankAnswers: [...this.blankAnswers]
+                        };
+                        
+                        if (this.checkBlankAnswers()) {
+                            this.score++;
+                        } else {
+                            const wrongQuestion = {
+                                ...this.currentQuestion,
+                                userAnswers: [...this.blankAnswers]
+                            };
+                            const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                            if (!exists) {
+                                this.wrongQuestions.push(wrongQuestion);
+                            }
+                        }
+                    } else {
+                        if (!this.selectedAnswer) return;
+                        
+                        this.showAnswer = true;
+                        this.answeredQuestions[this.currentIndex] = {
+                            answered: true,
+                            selectedAnswer: this.selectedAnswer
+                        };
+                        
+                        if (this.isCorrect) {
+                            this.score++;
+                        } else {
+                            const wrongQuestion = {
+                                ...this.currentQuestion,
+                                userAnswer: this.selectedAnswer
+                            };
+                            const exists = this.wrongQuestions.some(q => q.id === wrongQuestion.id);
+                            if (!exists) {
+                                this.wrongQuestions.push(wrongQuestion);
+                            }
+                        }
+                    }
+                },
+                checkAnswerAndNext() {
+                    this.checkAnswer();
+                    if (this.isCorrect && this.currentIndex < this.questions.length - 1) {
+                        setTimeout(() => {
+                            this.nextQuestion();
+                        }, 800);
+                    }
+                },
+                nextQuestion() {
+                    if (this.currentIndex < this.questions.length - 1) {
+                        this.currentIndex++;
+                        this.showAnswer = this.isQuestionAnswered(this.currentIndex);
+                        this.resetAnswers();
+                        if (this.showAnswer) {
+                            if (this.currentQuestion.type === 'blank') {
+                                this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
+                            } else {
+                                this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
+                            }
+                        }
+                    }
+                },
+                previousQuestion() {
+                    if (this.currentIndex > 0) {
+                        this.currentIndex--;
+                        this.showAnswer = this.isQuestionAnswered(this.currentIndex);
+                        this.resetAnswers();
+                        if (this.showAnswer) {
+                            if (this.currentQuestion.type === 'blank') {
+                                this.blankAnswers = [...this.answeredQuestions[this.currentIndex].blankAnswers];
+                            } else {
+                                this.selectedAnswer = this.answeredQuestions[this.currentIndex].selectedAnswer;
+                            }
+                        }
+                    }
+                },
+                toggleMode() {
+                    this.isReviewMode = !this.isReviewMode;
+                    if (!this.isReviewMode) {
+                        this.resetQuestion();
+                    }
+                },
+                resetQuestion() {
+                    this.selectedAnswer = '';
+                    this.blankAnswers = [];
+                    this.showAnswer = false;
+                },
+                async generatePDF() {
+                    if (this.isMobile()) {
+                        alert('建议在电脑端导出PDF以获得更好的效果');
+                    }
+                    try {
+                        this.isGeneratingPDF = true;
+                        await this.$nextTick();
+                        
+                        const element = document.getElementById('pdf-content');
+                        const opt = {
+                            margin: 10,
+                            filename: `错题记录_${new Date().toISOString().slice(0,19).replace(/[-:]/g, '').replace('T', '_')}.pdf`,
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { 
+                                scale: 2,
+                                useCORS: true,
+                                logging: false
+                            },
+                            jsPDF: { 
+                                unit: 'mm', 
+                                format: 'a4', 
+                                orientation: 'portrait' 
+                            }
+                        };
+
+                        await html2pdf().set(opt).from(element).save();
+                        this.isGeneratingPDF = false;
+                    } catch (error) {
+                        console.error('生成PDF时出错:', error);
+                        alert('生成PDF时出错，请稍后重试');
+                        this.isGeneratingPDF = false;
+                    }
+                },
+                getPreviousAnswer(index) {
+                    return this.answeredQuestions[index]?.selectedAnswer;
+                },
+                isBlankCorrect(index) {
+                    if (this.currentQuestion.id === 88) {
+                        const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+                        return correctAnswersSet.has(this.blankAnswers[index].trim().toLowerCase());
+                    }
+                    return this.blankAnswers[index].trim().toLowerCase() === this.currentQuestion.blanks[index].toLowerCase();
+                },
+                checkBlankAnswers() {
+                    if (this.currentQuestion.type !== 'blank') return true;
+                    
+                    const userAnswersSet = new Set(this.blankAnswers.map(ans => ans.trim().toLowerCase()));
+                    const correctAnswersSet = new Set(this.currentQuestion.blanks.map(ans => ans.toLowerCase()));
+                    
+                    return userAnswersSet.size === correctAnswersSet.size &&
+                           [...userAnswersSet].every(ans => correctAnswersSet.has(ans));
+                },
+                isMobile() {
+                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                }
+            },
+            created() {
+                // 获取题目数据
+                const quizData = localStorage.getItem('quizData');
+                if (!quizData) {
+                    alert('未找到题目数据，请返回首页重新选择');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // 解析题目数据
+                try {
+                    this.questions = JSON.parse(quizData);
+                } catch (error) {
+                    console.error('解析题目数据失败:', error);
+                    alert('题目数据格式错误，请返回首页重新选择');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // 初始化其他数据
+                this.wrongQuestions = [];
+                this.currentIndex = 0;
+                this.selectedAnswer = '';
+                this.showAnswer = false;
+                this.score = 0;
+                this.isReviewMode = false;
+                this.isGeneratingPDF = false;
+                this.answeredQuestions = {};
+                this.blankAnswers = [];
+                this.resetAnswers();
+            }
+        });
+    </script>
+</body>
+</html>

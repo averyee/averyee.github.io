@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{{ subjectName }} - 在线题库</title>
+    <title>在线题库</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
     <style>
@@ -1341,7 +1341,7 @@
             // 获取题目数据
             const quizData = localStorage.getItem('quizData');
             const selectedSubject = localStorage.getItem('selectedSubject');
-            
+
             if (!quizData || !selectedSubject) {
                 alert('未找到题目数据，请返回首页重新选择');
                 window.location.href = 'index.html';
